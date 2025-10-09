@@ -113,10 +113,10 @@ public class ControlRobot_servo extends OpMode {
         telemetry.addLine("Moving the right joystick left and right turns the robot");
 
         if (gamepad1.a) {//the y and a buttons are fliped
-            servo.setPosition(0.5);
+            servo.setPosition(1);
         }
         else if (gamepad1.b) {
-            servo.setPosition(-0.5);
+            servo.setPosition(-1);
         }
         else if (gamepad1.y) {//the y and a buttons are fliped
             servo.setPosition(0);
