@@ -28,7 +28,6 @@
  */
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -53,7 +52,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  */
 @TeleOp(name = "ControlRobot")
 //@Disabled
-public class ControlRobot extends OpMode {
+public class ControlRobot_servo extends OpMode {
     // This declares the four motors needed
     public Servo servo;
     DcMotor flmotor;
