@@ -29,7 +29,6 @@
 package org.firstinspires.ftc.teamcode.mechanisms;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -52,19 +51,41 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  *
  */
 @TeleOp(name = "Robot: Field Relative Mecanum Drive", group = "Robot")
-@Disabled
-public class ForwardDrive extends OpMode {
-    // This declares the four motors needed
+
+public class TeleOp_everything_needed extends OpMode {
+    // This declares the 7 motors needed
+
+    /* front left motor */
     DcMotor flmotor;
+    /* front right motor */
     DcMotor frmotor;
+    /* back left motor */
     DcMotor blmotor;
+    /* back right motor */
     DcMotor brmotor;
+    /* double wheel gecko style shooter */
+    DcMotor shooter_1;
+    DcMotor intake;
+
+    DcMotor outtake;
+
+    float intakePower = 0;
+
+
 
     // This declares the IMU needed to get the curr ent direction the robot is facing
+
+    /* IMU inertial measurement unit */
     IMU imu;
+
 
     @Override
     public void init() {
+        // Shooter motor
+        shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        outtake = hardwareMap.get(DcMotor.class, "outtake");
+
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
@@ -77,12 +98,26 @@ public class ForwardDrive extends OpMode {
         frmotor.setDirection(DcMotor.Direction.FORWARD);
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
+        // It's common for one of the shooter motors to be reversed
+        shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake.setDirection(DcMotorSimple.Direction.FORWARD);
+
+
+
         // This uses RUN_USING_ENCODER to be more accurate.   If you don't have the encoder
         // wires, you should remove these
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         blmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // Intake doesn't need encoder because it's not moving until someone presses a button.
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+
 
         imu = hardwareMap.get(IMU.class, "imu");
         // This needs to be changed to match the orientation on your robot
@@ -94,6 +129,8 @@ public class ForwardDrive extends OpMode {
         RevHubOrientationOnRobot orientationOnRobot = new
                 RevHubOrientationOnRobot(logoDirection, usbDirection);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
+
+
     }
 
     @Override
@@ -101,6 +138,7 @@ public class ForwardDrive extends OpMode {
         telemetry.addLine("Press A to reset Yaw");
         telemetry.addLine("Hold left bumper to drive in robot relative");
         telemetry.addLine("The left joystick sets the robot direction");
+        telemetry.addLine("Press 'B' to run the shooter");
         telemetry.addLine("Moving the right joystick left and right turns the robot");
 
         // If you press the A button, then you reset the Yaw to be zero from the way
@@ -114,6 +152,47 @@ public class ForwardDrive extends OpMode {
             drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         } else {
             driveFieldRelative(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        }
+        // Save the power of gamepad1.b
+        //if gamepad1.b is pressed, set the power of the shooter to 80%
+        //if gamepad1.b is pressed again set the power of the shooter to 0.
+
+
+        // Shooter controls
+        if (gamepad1.b) {
+            shooter_1.setPower(0.8);
+        } else {
+            shooter_1.setPower(0);
+        }
+        // intake button pressed
+        if (gamepad1.x) {
+            //check intake power value
+            //if intake power is 0, set power to 80%
+            if (intakePower == 0) {
+                intake.setPower(0.8);
+                intakePower = 0.8F;
+            } else {
+                //otherwise set power to 0
+                intake.setPower(0);
+                intakePower = 0;
+            }
+
+            /* gamepadx = gamepadx + 1;
+            if (gamepadx == 1){
+                intake.setPower(0.8);
+            }
+            if (gamepadx == 2) {
+                intake.setPower(0);
+                gamepadx = 0;
+            } */
+            //map servo to intake
+
+        }
+        if (gamepad1.y) {
+            outtake.setPower(1);
+            //map servo to outtake
+        } else {
+            outtake.setPower(0);
         }
     }
 
@@ -163,4 +242,6 @@ public class ForwardDrive extends OpMode {
         blmotor.setPower(maxSpeed * (backLeftPower / maxPower));
         brmotor.setPower(maxSpeed * (backRightPower / maxPower));
     }
+
 }
+
