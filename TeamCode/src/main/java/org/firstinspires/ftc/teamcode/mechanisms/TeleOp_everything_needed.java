@@ -59,6 +59,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
     DcMotor intake;
     DcMotor outtake;
     float intakePower = 0;
+
+    float shooterPower = 0;
     IMU imu;
 
     // --- AprilTag Vision Declarations (from first code block) ---
@@ -107,7 +109,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         // Motor Hardware Map
         shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
         intake = hardwareMap.get(DcMotor.class, "intake");
-        outtake = hardwareMap.get(DcMotor.class, "outtake");
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
@@ -120,7 +121,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
-        outtake.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Motor Modes
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -129,7 +129,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // IMU Setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -187,9 +186,13 @@ public class TeleOp_everything_needed extends LinearOpMode {
 
         // Shooter controls (B)
         if (gamepad1.b) {
-            shooter_1.setPower(0.8);
-        } else {
-            shooter_1.setPower(0);
+            if (shooterPower == 0) {
+                shooter_1.setPower(0.8);
+                shooterPower = 0.8F;
+            } else {
+                shooter_1.setPower(0);
+                shooterPower = 0;
+            }
         }
 
         // Intake controls (X) - Original Toggle Logic kept, but may misfire in a fast loop.
@@ -207,11 +210,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
         }
 
         // Outtake controls (Y)
-        if (gamepad1.y) {
-            outtake.setPower(1);
-        } else {
-            outtake.setPower(0);
-        }
+
     }
 
 
