@@ -206,11 +206,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
                 intakePower = 0;
             }
             // To prevent multiple toggles per single press, a delay or debounce logic is usually needed.
-            /*sleep(250);*/ // if needed uncomment this to have a bit of wait time before intake// Small sleep to help debounce the toggle
+            ///sleep(250);// // if needed uncomment this to have a bit of wait time before intake. Its better to not have wait.// Small sleep to help debounce the toggle
         }
-
-        // Outtake controls (Y)
-
     }
 
 
