@@ -59,6 +59,8 @@ public class ControlRobot_servo extends OpMode {
     DcMotor frmotor;
     DcMotor blmotor;
     DcMotor brmotor;
+    DcMotor outtake1;
+    DcMotor outtake2;
 
 
     // This declares the IMU needed to get the current direction the robot is facing
@@ -114,12 +116,8 @@ public class ControlRobot_servo extends OpMode {
 
         if (gamepad1.a) {//the y and a buttons are fliped
             servo.setPosition(1);
-        }
-        else if (gamepad1.b) {
+        } else if (gamepad1.b) {
             servo.setPosition(-1);
-        }
-        else if (gamepad1.y) {//the y and a buttons are fliped
-            servo.setPosition(0);
         }
 
         // If you press the A button, then you reset the Yaw to be zero from the way
@@ -134,6 +132,20 @@ public class ControlRobot_servo extends OpMode {
         } else {
             driveFieldRelative(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         }
+
+        if (gamepad1.right_trigger > 0.5) {
+            outtake1.setPower(1);
+            outtake2.setPower(-1);
+        }
+        else if (gamepad1.left_trigger > 0.5){
+            outtake1.setPower(-1);
+            outtake2.setPower(1);
+        }
+        else {
+            outtake1.setPower(0);
+            outtake2.setPower(0);
+        }
+
     }
 
 
