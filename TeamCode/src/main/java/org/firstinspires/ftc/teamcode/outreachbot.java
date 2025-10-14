@@ -71,8 +71,10 @@ public class outreachbot extends OpMode {
 
         // We set the left motors in reverse which is needed for drive trains where the left
         // motors are opposite to the right ones.
-        blmotor.setDirection(DcMotor.Direction.REVERSE);
+        blmotor.setDirection(DcMotor.Direction.FORWARD);
+        flmotor.setDirection(DcMotor.Direction.FORWARD);
         frmotor.setDirection(DcMotor.Direction.REVERSE);
+        brmotor.setDirection(DcMotor.Direction.REVERSE);
 
         // This uses RUN_USING_ENCODER to be more accurate.   If you don't have the encoder
         // wires, you should remove these
