@@ -22,6 +22,6 @@ public Servo servo;
         }
         else if (gamepad1.y) {//the y and a buttons are fliped
             servo.setPosition(0);
-        }
+        } 
     }
 }
