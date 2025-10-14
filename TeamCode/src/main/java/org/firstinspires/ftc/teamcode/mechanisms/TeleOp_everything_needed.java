@@ -58,6 +58,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
     DcMotor shooter_1;
     DcMotor intake;
     DcMotor outtake;
+    DcMotor outtake2;
     float intakePower = 0;
 
     float shooterPower = 0;
@@ -110,6 +111,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
         shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
         intake = hardwareMap.get(DcMotor.class, "intake");
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
+        outtake2 = hardwareMap.get(DcMotor.class, "outtake2");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
@@ -121,6 +123,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Motor Modes
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -129,6 +133,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // IMU Setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -183,6 +189,12 @@ public class TeleOp_everything_needed extends LinearOpMode {
         telemetry.addLine("Press 'B' for Shooter (0.8 power)");
         telemetry.addLine("Press 'X' to toggle Intake");
         telemetry.addLine("Press 'Y' for Outtake (1.0 power)");
+
+        // Outtake controls (Y)
+        if (gamepad1.y) {
+            outtake.setPower(1.0);
+            outtake2.setPower(1.0);
+        }
 
         // Shooter controls (B)
         if (gamepad1.b) {
@@ -264,21 +276,37 @@ public class TeleOp_everything_needed extends LinearOpMode {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addData("# AprilTags Detected", currentDetections.size());
 
+        // 1. Declare the variable here, in the method's scope, with a default value.
+        double outtakeSpeed = 0; // A value of 0 indicates no target has been seen yet.
+
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
+                // Check if the detected tag is a "Target"
+                if (detection.metadata.name.contains("Target")) {
+                    // 2. Assign the range value to our variable. Do not use 'double' here.
+                    outtakeSpeed = detection.ftcPose.range;
+                }
+
+                // This block will now run for ALL tags that have metadata, which is cleaner.
                 telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                telemetry.addLine(String.format("Distance to tag: %6.1f inches", detection.ftcPose.range));
                 telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
                 telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
             } else {
+                // This block runs only for tags with no metadata (e.g., unknown IDs)
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f    (pixels)", detection.center.x, detection.center.y));
+                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
-        }
+        }   // end for() loop
+
+        // 3. Now, print the final value of the variable AFTER the loop is done.
+        // This gives a summary of the most recently seen target's range.
+        telemetry.addData("Outtake Speed = ", outtakeSpeed);
 
         // Add "key" information to telemetry
-        telemetry.addLine("\nKey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
         telemetry.addLine("RBE = Range, Bearing & Elevation");
     }
