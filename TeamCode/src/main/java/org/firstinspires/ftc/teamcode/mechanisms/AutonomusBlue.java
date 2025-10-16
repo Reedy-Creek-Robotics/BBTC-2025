@@ -3,10 +3,9 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous(name = "Autonomous 1: Move and Shoot")
-public class Autonomus_1 extends LinearOpMode {
+public class AutonomusBlue extends LinearOpMode {
     // Drive motors
     private DcMotor flmotor;
     private DcMotor frmotor;
@@ -23,6 +22,7 @@ public class Autonomus_1 extends LinearOpMode {
     private static final double WHEEL_DIAMETER_INCHES = 4.0;
     private static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
     private static final double DRIVE_SPEED = 0.5;
+    private static final double TURN_SPEED = 0.4;
     private static final double SHOOTER_POWER = 0.85; // Power for shooter wheels
 
     @Override
@@ -56,11 +56,50 @@ public class Autonomus_1 extends LinearOpMode {
 
         waitForStart();
 
-        // Step 1: Move forward by 1 foot (12 inches)
-        moveForward(12, DRIVE_SPEED);
+        // Step 1: Move forward by 77 inches
+        moveForward(77, DRIVE_SPEED);
 
-        // Step 2: Spin up shooter wheels and shoot
+        // Step 2: Rotate 45 degrees
+        rotate(315, TURN_SPEED);
+
+        // Step 3: Spin up shooter wheels and shoot
         shoot();
+    }
+
+    private void rotate(double degrees, double speed) {
+        // Assuming a robot turning circle diameter of 15 inches, adjust as needed.
+        final double TURN_DIAMETER_INCHES = 15.0;
+        double inchesToTurn = (degrees / 360.0) * (TURN_DIAMETER_INCHES * 3.1415);
+        int target = (int)(inchesToTurn * COUNTS_PER_INCH);
+
+        setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // For a right turn
+        flmotor.setTargetPosition(target);
+        blmotor.setTargetPosition(target);
+        frmotor.setTargetPosition(-target);
+        brmotor.setTargetPosition(-target);
+
+        setDriveMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        flmotor.setPower(speed);
+        frmotor.setPower(speed);
+        blmotor.setPower(speed);
+        brmotor.setPower(speed);
+
+        while (opModeIsActive() && flmotor.isBusy() && frmotor.isBusy() && blmotor.isBusy() && brmotor.isBusy()) {
+            telemetry.addData("Path", "Rotating %d degrees", (int)degrees);
+            telemetry.update();
+        }
+
+        // Stop and reset
+        flmotor.setPower(0);
+        frmotor.setPower(0);
+        blmotor.setPower(0);
+        brmotor.setPower(0);
+
+        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250);
     }
 
     private void moveForward(double inches, double speed) {
@@ -131,3 +170,4 @@ public class Autonomus_1 extends LinearOpMode {
         brmotor.setMode(mode);
     }
 }
+

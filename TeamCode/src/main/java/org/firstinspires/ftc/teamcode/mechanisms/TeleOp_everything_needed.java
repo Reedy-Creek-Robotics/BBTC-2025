@@ -221,7 +221,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
         if (gamepad1.x) {
             // This is the original *toggle* logic:
             if (intakePower == 0) {
-                intake.setPower(0.8);
+                intake.setPower(0.5);
                 intakePower = 0.8F;
             } else {
                 intake.setPower(0);
