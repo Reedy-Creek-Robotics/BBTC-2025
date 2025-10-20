@@ -10,7 +10,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
 
-@Autonomous(name = "cam")
+@Autonomous(name = "cam1")
 public class cam extends LinearOpMode {
 
     private AprilTagProcessor aprilTag;
