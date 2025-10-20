@@ -58,10 +58,20 @@ public class TeleOp_everything_needed extends LinearOpMode {
     DcMotor shooter_1;
     DcMotor intake;
     DcMotor outtake;
+    DcMotor outtake2;
     float intakePower = 0;
 
     float shooterPower = 0;
     IMU imu;
+
+    // --- State & Constants for AprilTag Alignment ---
+    // These constants control the auto-align behavior.
+    // P-controller gain. Determines how fast the robot will turn.
+    final double ROTATION_P_GAIN = 0.02;
+    // Smallest error in degrees before the robot stops aligning.
+    final double ROTATION_ERROR_TOLERANCE = 1.0;
+    // Maximum rotation speed to prevent overshoot.
+    final double MAX_ROTATION_SPEED = 0.4;
 
     // --- AprilTag Vision Declarations (from first code block) ---
     private AprilTagProcessor aprilTag;
@@ -110,6 +120,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
         shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
         intake = hardwareMap.get(DcMotor.class, "intake");
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
+        outtake2 = hardwareMap.get(DcMotor.class, "outtake2");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
@@ -121,6 +132,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Motor Modes
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -129,6 +142,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // IMU Setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -182,7 +197,14 @@ public class TeleOp_everything_needed extends LinearOpMode {
         telemetry.addLine("\n--- Mechanism Controls ---");
         telemetry.addLine("Press 'B' for Shooter (0.8 power)");
         telemetry.addLine("Press 'X' to toggle Intake");
+        telemetry.addLine("Press right bumper to align to AprilTag");
         telemetry.addLine("Press 'Y' for Outtake (1.0 power)");
+
+        // Outtake controls (Y)
+        if (gamepad1.y) {
+            outtake.setPower(1.0);
+            outtake2.setPower(1.0);
+        }
 
         // Shooter controls (B)
         if (gamepad1.b) {
@@ -199,7 +221,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
         if (gamepad1.x) {
             // This is the original *toggle* logic:
             if (intakePower == 0) {
-                intake.setPower(0.8);
+                intake.setPower(0.5);
                 intakePower = 0.8F;
             } else {
                 intake.setPower(0);
@@ -208,8 +230,50 @@ public class TeleOp_everything_needed extends LinearOpMode {
             // To prevent multiple toggles per single press, a delay or debounce logic is usually needed.
             ///sleep(250);// // if needed uncomment this to have a bit of wait time before intake. Its better to not have wait.// Small sleep to help debounce the toggle
         }
+
+        // AprilTag Alignment (Right Bumper)
+        if (gamepad1.right_bumper) {
+            rotateToAprilTag();
+        }
     }
 
+    /**
+     * Rotates the robot to face the first detected AprilTag.
+     * This is a simple proportional controller.
+     */
+    private void rotateToAprilTag() {
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        AprilTagDetection targetTag = null;
+
+        // Find the first available tag.
+        if (!currentDetections.isEmpty()) {
+            targetTag = currentDetections.get(0);
+        }
+
+        if (targetTag != null) {
+            // The "bearing" is the angle to the tag, left or right. A positive bearing
+            // means the tag is to the left, and a negative bearing means it's to the right.
+            double rotationError = targetTag.ftcPose.bearing;
+
+            // Check if we are already aligned within our tolerance.
+            if (Math.abs(rotationError) > ROTATION_ERROR_TOLERANCE) {
+                // Calculate rotation power using a P-controller.
+                // The error is the "input" and the gain scales it to a motor power.
+                // We negate the bearing because a positive bearing (tag to the left)
+                // requires a negative (counter-clockwise) rotation power.
+                double rotationPower = -rotationError * ROTATION_P_GAIN;
+
+                // Clamp the rotation power to the max speed to avoid spinning too fast.
+                rotationPower = Math.max(-MAX_ROTATION_SPEED, Math.min(rotationPower, MAX_ROTATION_SPEED));
+
+                // Send the rotation power to the drive method. Forward and right are 0.
+                drive(0, 0, rotationPower);
+            } else {
+                // The robot is aligned, so stop rotating.
+                drive(0, 0, 0);
+            }
+        }
+    }
 
     // This routine drives the robot field relative
     private void driveFieldRelative(double forward, double right, double rotate) {
@@ -264,21 +328,37 @@ public class TeleOp_everything_needed extends LinearOpMode {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addData("# AprilTags Detected", currentDetections.size());
 
+        // 1. Declare the variable here, in the method's scope, with a default value.
+        double outtakeSpeed = 0; // A value of 0 indicates no target has been seen yet.
+
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
+                // Check if the detected tag is a "Target"
+                if (detection.metadata.name.contains("Target")) {
+                    // 2. Assign the range value to our variable. Do not use 'double' here.
+                    outtakeSpeed = detection.ftcPose.range;
+                }
+
+                // This block will now run for ALL tags that have metadata, which is cleaner.
                 telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                telemetry.addLine(String.format("Distance to tag: %6.1f inches", detection.ftcPose.range));
                 telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
                 telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
             } else {
+                // This block runs only for tags with no metadata (e.g., unknown IDs)
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f    (pixels)", detection.center.x, detection.center.y));
+                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
-        }
+        }   // end for() loop
+
+        // 3. Now, print the final value of the variable AFTER the loop is done.
+        // This gives a summary of the most recently seen target's range.
+        telemetry.addData("Outtake Speed = ", outtakeSpeed);
 
         // Add "key" information to telemetry
-        telemetry.addLine("\nKey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
         telemetry.addLine("RBE = Range, Bearing & Elevation");
     }
