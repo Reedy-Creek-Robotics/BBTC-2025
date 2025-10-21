@@ -133,19 +133,6 @@ public class ControlRobot_servo extends OpMode {
             driveFieldRelative(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         }
 
-        if (gamepad1.right_trigger > 0.5) {
-            outtake1.setPower(1);
-            outtake2.setPower(-1);
-        }
-        else if (gamepad1.left_trigger > 0.5){
-            outtake1.setPower(-1);
-            outtake2.setPower(1);
-        }
-        else {
-            outtake1.setPower(0);
-            outtake2.setPower(0);
-        }
-
     }
 
 

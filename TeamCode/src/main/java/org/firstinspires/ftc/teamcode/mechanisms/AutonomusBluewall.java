@@ -4,13 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-<<<<<<<< HEAD:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/mechanisms/AutonomusRedGoal.java
-@Autonomous(name = "AutonomousRedGoal")
-public class AutonomusRedGoal extends LinearOpMode {
+<<<<<<<< HEAD:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/mechanisms/AutonomusRedWall.java
+@Autonomous(name = "AutonomousBlueWall 1: Move and Shoot")
+public class AutonomusRedWall extends LinearOpMode {
 ========
 @Autonomous(name = "Autonomous 1: Move and Shoot")
-public class AutonomusRedwall extends LinearOpMode {
->>>>>>>> a5c8eccb39eaf5e31d0fff0b3cd0b1729fd5bb86:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/mechanisms/AutonomusRedwall.java
+public class AutonomusBluewall extends LinearOpMode {
+>>>>>>>> a5c8eccb39eaf5e31d0fff0b3cd0b1729fd5bb86:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/mechanisms/AutonomusBluewall.java
     // Drive motors
     private DcMotor flmotor;
     private DcMotor frmotor;
@@ -61,11 +61,11 @@ public class AutonomusRedwall extends LinearOpMode {
 
         waitForStart();
 
-        // Step 1: Move forward by 50 inches
-        moveForward(50, DRIVE_SPEED);
+        // Step 1: Move forward by 77 inches
+        moveForward(77, DRIVE_SPEED);
 
-        // Step 2: Rotate 180 degrees
-        rotate(180, TURN_SPEED);
+        // Step 2: Rotate 45 degrees
+        rotate(315, TURN_SPEED);
 
         // Step 3: Spin up shooter wheels and shoot
         shoot();
@@ -98,7 +98,13 @@ public class AutonomusRedwall extends LinearOpMode {
         }
 
         // Stop and reset
-        stopAndResetDrive();
+        flmotor.setPower(0);
+        frmotor.setPower(0);
+        blmotor.setPower(0);
+        brmotor.setPower(0);
+
+        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250);
     }
 
     private void moveForward(double inches, double speed) {
@@ -113,10 +119,13 @@ public class AutonomusRedwall extends LinearOpMode {
 
         setDriveMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        setDrivePower(speed);
+        flmotor.setPower(speed);
+        frmotor.setPower(speed);
+        blmotor.setPower(speed);
+        brmotor.setPower(speed);
 
         while (opModeIsActive() && flmotor.isBusy() && frmotor.isBusy() && blmotor.isBusy() && brmotor.isBusy()) {
-            telemetry.addData("Path", "Moving forward %f inches", inches);
+            telemetry.addData("Path", "Moving forward %d inches", inches);
             telemetry.addData("Target", "Running to %d", target);
             telemetry.addData("Current Position", "fl:%d fr:%d bl:%d br:%d",
                     flmotor.getCurrentPosition(),
@@ -127,7 +136,13 @@ public class AutonomusRedwall extends LinearOpMode {
         }
 
         // Stop all motion
-        stopAndResetDrive();
+        flmotor.setPower(0);
+        frmotor.setPower(0);
+        blmotor.setPower(0);
+        brmotor.setPower(0);
+
+        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250); // Pause for stability
     }
 
     private void shoot() {
@@ -159,17 +174,5 @@ public class AutonomusRedwall extends LinearOpMode {
         blmotor.setMode(mode);
         brmotor.setMode(mode);
     }
-
-    private void setDrivePower(double power) {
-        flmotor.setPower(power);
-        frmotor.setPower(power);
-        blmotor.setPower(power);
-        brmotor.setPower(power);
-    }
-
-    private void stopAndResetDrive() {
-        setDrivePower(0);
-        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        sleep(250); // Pause for stability
-    }
 }
+
