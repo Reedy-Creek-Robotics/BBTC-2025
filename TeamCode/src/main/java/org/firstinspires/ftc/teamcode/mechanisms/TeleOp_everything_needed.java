@@ -47,7 +47,7 @@ import java.util.List; // Added for List
  * This TeleOp OpMode combines Field-Relative Mecanum Drive, Mechanism Controls,
  * and Live AprilTag Vision Telemetry using a LinearOpMode structure.
  */
-@TeleOp(name = "TeleOp: Mecanum+Vision", group = "Robot")
+@TeleOp(name = "TeleOp:all")
 
 public class TeleOp_everything_needed extends LinearOpMode {
     // --- Drive & Mechanism Declarations ---
@@ -75,13 +75,10 @@ public class TeleOp_everything_needed extends LinearOpMode {
 
     // --- AprilTag Vision Declarations (from first code block) ---
     private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
 
     @Override
     public void runOpMode() throws InterruptedException {
         // --- Initialization ---
-        initializeHardware();
-        initializeVision();
 
         telemetry.addLine("Initialization Complete: Press Play!");
         telemetry.update();
@@ -93,29 +90,18 @@ public class TeleOp_everything_needed extends LinearOpMode {
             // --- Main TeleOp Loop (Replaces the OpMode.loop() method) ---
             while (opModeIsActive()) {
 
-                // 1. Handle Drive Controls
-                handleDrive();
-
-                // 2. Handle Mechanism Controls
-                handleMechanisms();
-
-                // 3. Update AprilTag Telemetry
-                telemetryAprilTag();
 
                 // Push all new data to the driver station
                 telemetry.update();
             }
-        } finally {
-            if (visionPortal != null) {
-                visionPortal.close();
-            }
+    } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-    }
 
-    /**
+        /**
      * Initializes all motors and the IMU.
      */
-    private void initializeHardware() {
+    public void initializeHardware;() {
         // Motor Hardware Map
         shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
         intake = hardwareMap.get(DcMotor.class, "intake");
@@ -156,14 +142,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
     /**
      * Initializes the AprilTag Vision Processor (from first code block).
      */
-    private void initializeVision() {
-        // Create the AprilTag processor (from first code block)
-        aprilTag = AprilTagProcessor.easyCreateWithDefaults();
 
-        // Create the Vision Portal (from first code block)
-        visionPortal = VisionPortal.easyCreateWithDefaults(
-                hardwareMap.get(WebcamName.class, "Webcam 1"), aprilTag);
-    }
 
     /**
      * Handles all drive-related gamepad input.
@@ -363,3 +342,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         telemetry.addLine("RBE = Range, Bearing & Elevation");
     }
 }
+
+    private void driveFieldRelative(double forward, double right, double rotate) {
+    }
