@@ -34,6 +34,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 
@@ -52,6 +54,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
     DcMotor shooter_1;
     DcMotor shooter_2;
     DcMotor intake;
+
+    Servo transfer1;
     float intakePower = 0;
 
     float shooterPower = 0;
