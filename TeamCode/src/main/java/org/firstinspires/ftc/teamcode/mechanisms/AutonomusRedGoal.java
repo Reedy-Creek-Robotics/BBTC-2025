@@ -3,8 +3,14 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+
+<<<<<<<< HEAD:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/mechanisms/AutonomusRedGoal.java
+@Autonomous(name = "AutonomousRedGoal")
+public class AutonomusRedGoal extends LinearOpMode {
+========
 @Autonomous(name = "Autonomous 1: Move and Shoot")
 public class AutonomusRedwall extends LinearOpMode {
+>>>>>>>> a5c8eccb39eaf5e31d0fff0b3cd0b1729fd5bb86:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/mechanisms/AutonomusRedwall.java
     // Drive motors
     private DcMotor flmotor;
     private DcMotor frmotor;

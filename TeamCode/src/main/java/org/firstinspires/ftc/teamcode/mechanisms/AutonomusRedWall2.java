@@ -3,8 +3,9 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-@Autonomous(name = "Autonomous 1: Move and Shoot")
-public class AutonomusRedwall extends LinearOpMode {
+
+@Autonomous(name = "AutonomousBlueWall 1: Move and Shoot")
+public class AutonomusRedWall2 extends LinearOpMode {
     // Drive motors
     private DcMotor flmotor;
     private DcMotor frmotor;
@@ -14,6 +15,9 @@ public class AutonomusRedwall extends LinearOpMode {
     // Shooter motors (twin wheels)
     private DcMotor leftShooterWheel;
     private DcMotor rightShooterWheel;
+
+    // Intake motor
+    private DcMotor intake;
 
     // Constants for movement
     private static final double COUNTS_PER_MOTOR_REV = 537.7; // Example for a REV HD Hex Motor
@@ -33,6 +37,7 @@ public class AutonomusRedwall extends LinearOpMode {
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
         leftShooterWheel = hardwareMap.get(DcMotor.class, "leftShooterWheel");
         rightShooterWheel = hardwareMap.get(DcMotor.class, "rightShooterWheel");
+        intake = hardwareMap.get(DcMotor.class, "intake");
 
         // Set motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -43,29 +48,72 @@ public class AutonomusRedwall extends LinearOpMode {
         // Shooter wheels often spin opposite directions
         leftShooterWheel.setDirection(DcMotor.Direction.FORWARD);
         rightShooterWheel.setDirection(DcMotor.Direction.REVERSE);
+        intake.setDirection(DcMotor.Direction.FORWARD);
 
         // Reset encoders and set to run with encoders
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftShooterWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightShooterWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         telemetry.addData("Status", "Initialized and ready to run");
         telemetry.update();
 
         waitForStart();
 
-        // Step 1: Move forward by 50 inches
-        moveForward(50, DRIVE_SPEED);
+        // New sequence
+        // 1. Rotate 10 degrees to the right
+        rotate(10, TURN_SPEED, "right");
 
-        // Step 2: Rotate 180 degrees
-        rotate(180, TURN_SPEED);
+        moveForward(40, DRIVE_SPEED);
 
-        // Step 3: Spin up shooter wheels and shoot
+
+        rotate(180, TURN_SPEED, "left");
+
+
+        // 2. Shoot
         shoot();
+
+
+        // 3. Move forward 2 feet (24 inches)
+
+        // 4. Turn right 90 degrees
+        rotate(90, TURN_SPEED, "left");
+
+        moveForward(37, DRIVE_SPEED);
+
+        rotate(90, TURN_SPEED, "right");
+
+
+
+        intake.setPower(0.1);
+
+        moveForward(37, DRIVE_SPEED);
+
+
+
+        intake.setPower(0);
+
+
+
+        rotate(180, TURN_SPEED, "right");
+
+        moveForward(37, DRIVE_SPEED);
+
+        rotate(90, TURN_SPEED, "left");
+
+        moveForward(37, DRIVE_SPEED);
+
+        rotate(90, TURN_SPEED, "left");
+
+
+        shoot();
+
     }
 
-    private void rotate(double degrees, double speed) {
+    // Updated rotate method for left and right turns
+    private void rotate(double degrees, double speed, String direction) {
         // Assuming a robot turning circle diameter of 15 inches, adjust as needed.
         final double TURN_DIAMETER_INCHES = 15.0;
         double inchesToTurn = (degrees / 360.0) * (TURN_DIAMETER_INCHES * 3.1415);
@@ -73,11 +121,17 @@ public class AutonomusRedwall extends LinearOpMode {
 
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        // For a right turn
-        flmotor.setTargetPosition(target);
-        blmotor.setTargetPosition(target);
-        frmotor.setTargetPosition(-target);
-        brmotor.setTargetPosition(-target);
+        if (direction.equalsIgnoreCase("right")) {
+            flmotor.setTargetPosition(target);
+            blmotor.setTargetPosition(target);
+            frmotor.setTargetPosition(-target);
+            brmotor.setTargetPosition(-target);
+        } else { // Assume left turn
+            flmotor.setTargetPosition(-target);
+            blmotor.setTargetPosition(-target);
+            frmotor.setTargetPosition(target);
+            brmotor.setTargetPosition(target);
+        }
 
         setDriveMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -87,14 +141,21 @@ public class AutonomusRedwall extends LinearOpMode {
         brmotor.setPower(speed);
 
         while (opModeIsActive() && flmotor.isBusy() && frmotor.isBusy() && blmotor.isBusy() && brmotor.isBusy()) {
-            telemetry.addData("Path", "Rotating %d degrees", (int)degrees);
+            telemetry.addData("Path", "Rotating %d degrees %s", (int)degrees, direction);
             telemetry.update();
         }
 
         // Stop and reset
-        stopAndResetDrive();
+        flmotor.setPower(0);
+        frmotor.setPower(0);
+        blmotor.setPower(0);
+        brmotor.setPower(0);
+
+        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250);
     }
 
+    // Method to move forward using encoder ticks
     private void moveForward(double inches, double speed) {
         int target = (int)(inches * COUNTS_PER_INCH);
 
@@ -107,10 +168,13 @@ public class AutonomusRedwall extends LinearOpMode {
 
         setDriveMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        setDrivePower(speed);
+        flmotor.setPower(speed);
+        frmotor.setPower(speed);
+        blmotor.setPower(speed);
+        brmotor.setPower(speed);
 
         while (opModeIsActive() && flmotor.isBusy() && frmotor.isBusy() && blmotor.isBusy() && brmotor.isBusy()) {
-            telemetry.addData("Path", "Moving forward %f inches", inches);
+            telemetry.addData("Path", "Moving forward %d inches", inches);
             telemetry.addData("Target", "Running to %d", target);
             telemetry.addData("Current Position", "fl:%d fr:%d bl:%d br:%d",
                     flmotor.getCurrentPosition(),
@@ -121,9 +185,16 @@ public class AutonomusRedwall extends LinearOpMode {
         }
 
         // Stop all motion
-        stopAndResetDrive();
+        flmotor.setPower(0);
+        frmotor.setPower(0);
+        blmotor.setPower(0);
+        brmotor.setPower(0);
+
+        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250); // Pause for stability
     }
 
+    // Method to operate the shooter wheels
     private void shoot() {
         telemetry.addData("Status", "Spinning up shooter");
         telemetry.update();
@@ -147,23 +218,11 @@ public class AutonomusRedwall extends LinearOpMode {
         telemetry.update();
     }
 
+    // Helper method to set drive motor mode
     private void setDriveMotorMode(DcMotor.RunMode mode) {
         flmotor.setMode(mode);
         frmotor.setMode(mode);
         blmotor.setMode(mode);
         brmotor.setMode(mode);
-    }
-
-    private void setDrivePower(double power) {
-        flmotor.setPower(power);
-        frmotor.setPower(power);
-        blmotor.setPower(power);
-        brmotor.setPower(power);
-    }
-
-    private void stopAndResetDrive() {
-        setDrivePower(0);
-        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        sleep(250); // Pause for stability
     }
 }
