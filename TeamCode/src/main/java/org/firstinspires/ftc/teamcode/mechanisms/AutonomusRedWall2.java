@@ -66,32 +66,47 @@ public class AutonomusRedWall2 extends LinearOpMode {
         // 1. Rotate 10 degrees to the right
         rotate(10, TURN_SPEED, "right");
 
-        // 2. Shoot
-        shoot();
+        moveForward(40, DRIVE_SPEED);
 
-        rotate(10, TURN_SPEED, "left");
-
-        // 3. Move forward 2 feet (24 inches)
-        moveForward(24, DRIVE_SPEED);
-
-        // 4. Turn right 90 degrees
-        rotate(90, TURN_SPEED, "right");
-
-        intake.setPower(0.1);
-
-        moveForward(30, DRIVE_SPEED);
-
-        intake.setPower(0);
 
         rotate(180, TURN_SPEED, "left");
 
-        moveForward(30, DRIVE_SPEED);
+
+        // 2. Shoot
+        shoot();
+
+
+        // 3. Move forward 2 feet (24 inches)
+
+        // 4. Turn right 90 degrees
+        rotate(90, TURN_SPEED, "left");
+
+        moveForward(37, DRIVE_SPEED);
 
         rotate(90, TURN_SPEED, "right");
 
-        moveForward(36, DRIVE_SPEED);
 
-        rotate(45, TURN_SPEED, "right");
+
+        intake.setPower(0.1);
+
+        moveForward(37, DRIVE_SPEED);
+
+
+
+        intake.setPower(0);
+
+
+
+        rotate(180, TURN_SPEED, "right");
+
+        moveForward(37, DRIVE_SPEED);
+
+        rotate(90, TURN_SPEED, "left");
+
+        moveForward(37, DRIVE_SPEED);
+
+        rotate(90, TURN_SPEED, "left");
+
 
         shoot();
 
