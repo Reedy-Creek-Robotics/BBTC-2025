@@ -34,16 +34,26 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+<<<<<<< HEAD
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+=======
+>>>>>>> 08a1b219e7f3c2557a40e8b5c06d611c85c92e29
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName; // Added for Webcam
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.vision.VisionPortal; // Added for Vision
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection; // Added for AprilTag
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor; // Added for AprilTag
+
+import java.util.List; // Added for List
 
 /**
  * This TeleOp OpMode combines Field-Relative Mecanum Drive, Mechanism Controls,
  * and Live AprilTag Vision Telemetry using a LinearOpMode structure.
  */
-@TeleOp(name = "TeleOp: Mecanum+Vision", group = "Robot")
+@TeleOp(name = "TeleOp:all")
 
 public class TeleOp_everything_needed extends LinearOpMode {
     // --- Drive & Mechanism Declarations ---
@@ -52,10 +62,14 @@ public class TeleOp_everything_needed extends LinearOpMode {
     DcMotor blmotor;
     DcMotor brmotor;
     DcMotor shooter_1;
-    DcMotor shooter_2;
     DcMotor intake;
+<<<<<<< HEAD
 
     Servo transfer1;
+=======
+    DcMotor outtake;
+    DcMotor outtake2;
+>>>>>>> 08a1b219e7f3c2557a40e8b5c06d611c85c92e29
     float intakePower = 0;
 
     float shooterPower = 0;
@@ -70,50 +84,43 @@ public class TeleOp_everything_needed extends LinearOpMode {
     // Maximum rotation speed to prevent overshoot.
     final double MAX_ROTATION_SPEED = 0.4;
 
-    // --- State variables for toggles ---
-    private boolean intakeOn = false;      // Tracks the state of the intake motor
-    private boolean xWasPressed = false;   // Tracks the previous state of the 'X' button to detect a single press
-    private boolean shooterOn = false;     // Tracks the state of the shooter motors
-    private boolean bWasPressed = false;   // Tracks the previous state of the 'B' button
-
+    // --- AprilTag Vision Declarations (from first code block) ---
+    private AprilTagProcessor aprilTag;
 
     @Override
     public void runOpMode() throws InterruptedException {
         // --- Initialization ---
-        initializeHardware();
 
         telemetry.addLine("Initialization Complete: Press Play!");
         telemetry.update();
 
         waitForStart();
 
-        // --- Main TeleOp Loop (Replaces the OpMode.loop() method) ---
-        while (opModeIsActive()) {
+        // Ensure the vision portal is closed when the OpMode ends
+        try {
+            // --- Main TeleOp Loop (Replaces the OpMode.loop() method) ---
+            while (opModeIsActive()) {
 
-            // 1. Handle Drive Controls
-            handleDrive();
 
-            // 2. Handle Mechanism Controls
-            handleMechanisms();
-
-            // Push all new data to the driver station
-            telemetry.update();
+                // Push all new data to the driver station
+                telemetry.update();
+            }
+    } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-    }
 
-
-    /**
+        /**
      * Initializes all motors and the IMU.
      */
-    private void initializeHardware() {
+    public void initializeHardware;() {
         // Motor Hardware Map
-        shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
         shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
+        intake = hardwareMap.get(DcMotor.class, "intake");
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
+        outtake2 = hardwareMap.get(DcMotor.class, "outtake2");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
-        intake = hardwareMap.get(DcMotor.class, "intake");
 
         // Motor Directions
         blmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -121,17 +128,19 @@ public class TeleOp_everything_needed extends LinearOpMode {
         frmotor.setDirection(DcMotor.Direction.FORWARD);
         brmotor.setDirection(DcMotor.Direction.FORWARD);
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
-        shooter_2.setDirection(DcMotorSimple.Direction.REVERSE);
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Motor Modes
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         blmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        outtake2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // IMU Setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -140,6 +149,11 @@ public class TeleOp_everything_needed extends LinearOpMode {
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
     }
+
+    /**
+     * Initializes the AprilTag Vision Processor (from first code block).
+     */
+
 
     /**
      * Handles all drive-related gamepad input.
@@ -166,46 +180,107 @@ public class TeleOp_everything_needed extends LinearOpMode {
         }
     }
 
-    private void driveFieldRelative(double forward, double right, double rotate) {
-    }
-
     /**
      * Handles all mechanism-related gamepad input.
      */
     private void handleMechanisms() {
-        // telemetry.addLine("\n--- Mechanism Controls ---");
-        // telemetry.addLine("Press 'B' for Shooter (0.8 power)");
-        // telemetry.addLine("Press 'X' to toggle Intake");
-        // telemetry.addLine("Press right bumper to align to AprilTag");
+        telemetry.addLine("\n--- Mechanism Controls ---");
+        telemetry.addLine("Press 'B' for Shooter (0.8 power)");
+        telemetry.addLine("Press 'X' to toggle Intake");
+        telemetry.addLine("Press right bumper to align to AprilTag");
+        telemetry.addLine("Press 'Y' for Outtake (1.0 power)");
 
-        // Intake toggle controls (X)
-        // Check if the 'X' button is currently pressed and wasn't pressed on the previous loop iteration.
-        // This makes it a "rising edge" detector, so the code inside only runs once per button press.
-        if (gamepad1.x && !xWasPressed) {
-            intakeOn = !intakeOn; // Flip the state of the intake
-        }
-        // Update the button state for the next loop iteration.
-        xWasPressed = gamepad1.x;
-
-        if (intakeOn) {
-            intake.setPower(1.0); // Set to full power when on
-        } else {
-            intake.setPower(0);
+        // Outtake controls (Y)
+        if (gamepad1.y) {
+            outtake.setPower(1.0);
+            outtake2.setPower(1.0);
         }
 
-        // Shooter toggle controls (B)
-        if (gamepad1.b && !bWasPressed) {
-            shooterOn = !shooterOn; // Flip the state of the shooter
+        // Shooter controls (B)
+        if (gamepad1.b) {
+            if (shooterPower == 0) {
+                shooter_1.setPower(0.8);
+                shooterPower = 0.8F;
+            } else {
+                shooter_1.setPower(0);
+                shooterPower = 0;
+            }
         }
-        bWasPressed = gamepad1.b;
 
-        if (shooterOn) {
-            shooter_1.setPower(1.0); // Run shooter forward
-            shooter_2.setPower(1.0); // Run shooter forward
-        } else {
-            shooter_1.setPower(0); // Stop shooter
-            shooter_2.setPower(0); // Stop shooter
+        // Intake controls (X) - Original Toggle Logic kept, but may misfire in a fast loop.
+        if (gamepad1.x) {
+            // This is the original *toggle* logic:
+            if (intakePower == 0) {
+                intake.setPower(0.5);
+                intakePower = 0.8F;
+            } else {
+                intake.setPower(0);
+                intakePower = 0;
+            }
+            // To prevent multiple toggles per single press, a delay or debounce logic is usually needed.
+            ///sleep(250);// // if needed uncomment this to have a bit of wait time before intake. Its better to not have wait.// Small sleep to help debounce the toggle
         }
+
+        // AprilTag Alignment (Right Bumper)
+        if (gamepad1.right_bumper) {
+            rotateToAprilTag();
+        }
+    }
+
+    /**
+     * Rotates the robot to face the first detected AprilTag.
+     * This is a simple proportional controller.
+     */
+    private void rotateToAprilTag() {
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        AprilTagDetection targetTag = null;
+
+        // Find the first available tag.
+        if (!currentDetections.isEmpty()) {
+            targetTag = currentDetections.get(0);
+        }
+
+        if (targetTag != null) {
+            // The "bearing" is the angle to the tag, left or right. A positive bearing
+            // means the tag is to the left, and a negative bearing means it's to the right.
+            double rotationError = targetTag.ftcPose.bearing;
+
+            // Check if we are already aligned within our tolerance.
+            if (Math.abs(rotationError) > ROTATION_ERROR_TOLERANCE) {
+                // Calculate rotation power using a P-controller.
+                // The error is the "input" and the gain scales it to a motor power.
+                // We negate the bearing because a positive bearing (tag to the left)
+                // requires a negative (counter-clockwise) rotation power.
+                double rotationPower = -rotationError * ROTATION_P_GAIN;
+
+                // Clamp the rotation power to the max speed to avoid spinning too fast.
+                rotationPower = Math.max(-MAX_ROTATION_SPEED, Math.min(rotationPower, MAX_ROTATION_SPEED));
+
+                // Send the rotation power to the drive method. Forward and right are 0.
+                drive(0, 0, rotationPower);
+            } else {
+                // The robot is aligned, so stop rotating.
+                drive(0, 0, 0);
+            }
+        }
+    }
+
+    // This routine drives the robot field relative
+    private void driveFieldRelative(double forward, double right, double rotate) {
+        // First, convert direction being asked to drive to polar coordinates
+        double theta = Math.atan2(forward, right);
+        double r = Math.hypot(right, forward);
+
+        // Second, rotate angle by the angle the robot is pointing
+        theta = AngleUnit.normalizeRadians(theta -
+                imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+
+        // Third, convert back to cartesian
+        double newForward = r * Math.sin(theta);
+        double newRight = r * Math.cos(theta);
+
+        // Finally, call the drive method with robot relative forward and right amounts
+        drive(newForward, newRight, rotate);
     }
 
     // Thanks to FTC16072 for sharing this code!!
@@ -233,4 +308,51 @@ public class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setPower(maxSpeed * (backRightPower / maxPower));
     }
 
+
+    /**
+     * Updates telemetry with AprilTag detection data (from first code block).
+     */
+    private void telemetryAprilTag() {
+        telemetry.addLine("\n--- AprilTag Vision ---");
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        telemetry.addData("# AprilTags Detected", currentDetections.size());
+
+        // 1. Declare the variable here, in the method's scope, with a default value.
+        double outtakeSpeed = 0; // A value of 0 indicates no target has been seen yet.
+
+        // Step through the list of detections and display info for each one.
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                // Check if the detected tag is a "Target"
+                if (detection.metadata.name.contains("Target")) {
+                    // 2. Assign the range value to our variable. Do not use 'double' here.
+                    outtakeSpeed = detection.ftcPose.range;
+                }
+
+                // This block will now run for ALL tags that have metadata, which is cleaner.
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                telemetry.addLine(String.format("Distance to tag: %6.1f inches", detection.ftcPose.range));
+                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+            } else {
+                // This block runs only for tags with no metadata (e.g., unknown IDs)
+                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+            }
+        }   // end for() loop
+
+        // 3. Now, print the final value of the variable AFTER the loop is done.
+        // This gives a summary of the most recently seen target's range.
+        telemetry.addData("Outtake Speed = ", outtakeSpeed);
+
+        // Add "key" information to telemetry
+        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        telemetry.addLine("RBE = Range, Bearing & Elevation");
+    }
 }
+
+    private void driveFieldRelative(double forward, double right, double rotate) {
+    }
