@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "Autonomous 1: Move and Shoot")
-public class AutonomusRed extends LinearOpMode {
+public class AutonomusRedwall extends LinearOpMode {
     // Drive motors
     private DcMotor flmotor;
     private DcMotor frmotor;

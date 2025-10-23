@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name="shooting", group="Linear Opmode")
+@TeleOp(name="shooting")
 // REMOVE 'abstract' from the line below
 public class shooting extends LinearOpMode {
     private DcMotor shooter1;
@@ -33,8 +33,8 @@ public class shooting extends LinearOpMode {
             if (b_curr && !b_prev) {
                 shooterOn = !shooterOn;
             }
-            shooter1.setPower(shooterOn ? 0.25 : 0.0);
-            shooter2.setPower(shooterOn ? 0.25 : 0.0);
+            shooter1.setPower(shooterOn ? 0.45 : 0.0);
+            shooter2.setPower(shooterOn ? 0.45 : 0.0);
         }
     }
 }
