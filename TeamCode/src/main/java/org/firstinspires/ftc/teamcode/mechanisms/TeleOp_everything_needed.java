@@ -26,6 +26,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
     private boolean bWasPressed = false;
     private double flmod = 1;
     private double frmod = 1;
+    private double blmod = 1;
     private double brmod = 1;
     @Override
     public void runOpMode() throws InterruptedException {
