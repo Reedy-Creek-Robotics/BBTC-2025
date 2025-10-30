@@ -24,7 +24,9 @@ public class TeleOp_everything_needed extends LinearOpMode {
     private boolean xWasPressed = false;
     private boolean shooterOn = false;
     private boolean bWasPressed = false;
-
+    private double flmod = 1;
+    private double frmod = 1;
+    private double brmod = 1;
     @Override
     public void runOpMode() throws InterruptedException {
         initializeHardware();
@@ -134,10 +136,10 @@ public class TeleOp_everything_needed extends LinearOpMode {
 
     /** Standard mecanum drive kinematics */
     private void drive(double forward, double right, double rotate) {
-        double frontLeftPower = forward + right + rotate;
-        double frontRightPower = forward - right - rotate;
-        double backRightPower = forward + right - rotate;
-        double backLeftPower = forward - right + rotate;
+        double frontLeftPower = forward + right + rotate + flmod;
+        double frontRightPower = forward - right - rotate + frmod;
+        double backRightPower = forward + right - rotate + blmod;
+        double backLeftPower = forward - right + rotate + brmod;
 
         double maxPower = Math.max(1.0, Math.max(
                 Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
