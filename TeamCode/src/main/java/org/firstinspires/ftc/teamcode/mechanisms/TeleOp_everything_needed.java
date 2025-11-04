@@ -19,8 +19,8 @@ class TeleOp_everything_needed extends LinearOpMode {
     // --- State variables ---
     private boolean intakeOn = false;
     private boolean xWasPressed = false;
+    private boolean shooterOn = false;
     private boolean bWasPressed = false;
-    private int bPressCount = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -118,26 +118,12 @@ class TeleOp_everything_needed extends LinearOpMode {
         xWasPressed = gamepad1.x;
         intake.setPower(intakeOn ? 1.0 : 0.0);
 
-        // Shooter power cycle (B)
+        // Shooter toggle (B)
         if (gamepad1.b && !bWasPressed) {
-            bPressCount++;
-            if (bPressCount > 3) {
-                bPressCount = 0; // Reset after the 4th press
-            }
+            shooterOn = !shooterOn;
         }
         bWasPressed = gamepad1.b;
-
-        double shooterPower = 0.0;
-        if (bPressCount == 1) {
-            shooterPower = 0.05; // 5% power
-        } else if (bPressCount == 2) {
-            shooterPower = 0.10; // 10% power
-        } else if (bPressCount == 3) {
-            shooterPower = 0.15; // 15% power
-        }
-        // bPressCount == 0 (or any other value) results in 0.0 power
-
-        shooter_1.setPower(shooterPower);
-        shooter_2.setPower(shooterPower);
+        shooter_1.setPower(shooterOn ? 1.0 : 0.0);
+        shooter_2.setPower(shooterOn ? 1.0 : 0.0);
     }
 }
