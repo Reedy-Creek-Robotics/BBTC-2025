@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "TeleOp: Mecanum+Vision", group = "Main")
+@TeleOp(name = "TeleOp:all")
 public class TeleOp_everything_needed extends LinearOpMode {
 
     // --- Drive & Mechanism Declarations ---
