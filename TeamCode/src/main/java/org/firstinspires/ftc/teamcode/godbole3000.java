@@ -14,7 +14,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
 
-@TeleOp (name = "godbole3000", group = "Practice")
+@TeleOp(name = "godbole3000_fixed", group = "Practice")
 public class godbole3000 extends OpMode {
 
     // Motors
@@ -22,6 +22,7 @@ public class godbole3000 extends OpMode {
 
     // IMU
     private IMU imu;
+    private double yawOffset = 0;  // <-- Logical yaw zero offset
 
     // Vision
     private AprilTagProcessor aprilTag;
@@ -34,7 +35,7 @@ public class godbole3000 extends OpMode {
         frdrive = hardwareMap.get(DcMotor.class, "frmotor");
         bldrive = hardwareMap.get(DcMotor.class, "blmotor");
         brdrive = hardwareMap.get(DcMotor.class, "brmotor");
-        
+
         bldrive.setDirection(DcMotor.Direction.REVERSE);
         fldrive.setDirection(DcMotor.Direction.REVERSE);
 
@@ -47,7 +48,8 @@ public class godbole3000 extends OpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+        );
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
         // Vision Setup
@@ -58,13 +60,13 @@ public class godbole3000 extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addLine("Press A to reset Yaw");
-        telemetry.addLine("Hold left bumper to drive in robot-relative mode");
-        telemetry.addLine("Left stick = drive | Right stick = rotate");
+        telemetry.addLine("Press A to reset heading (logical yaw)");
+        telemetry.addLine("Hold left bumper for robot-relative drive");
+        telemetry.addLine("Left stick = move | Right stick = rotate");
 
-        // Reset IMU Yaw
+        // Logical yaw reset
         if (gamepad1.a) {
-            imu.resetYaw();
+            yawOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         }
 
         // Drive Modes
@@ -74,7 +76,7 @@ public class godbole3000 extends OpMode {
             driveFieldRelative(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         }
 
-        // Add AprilTag telemetry
+        // AprilTag telemetry
         telemetryAprilTag();
         telemetry.update();
     }
@@ -83,7 +85,8 @@ public class godbole3000 extends OpMode {
         double theta = Math.atan2(forward, right);
         double r = Math.hypot(right, forward);
 
-        theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - yawOffset;
+        theta = AngleUnit.normalizeRadians(theta - robotYaw);
 
         double newForward = r * Math.sin(theta);
         double newRight = r * Math.cos(theta);
