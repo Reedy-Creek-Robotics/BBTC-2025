@@ -24,5 +24,6 @@ android {
 }
 
 dependencies {
-    implementation project(':FtcRobotController')
+    implementation project(":FtcRobotController") // or whatever your SDK module is named
 }
+
