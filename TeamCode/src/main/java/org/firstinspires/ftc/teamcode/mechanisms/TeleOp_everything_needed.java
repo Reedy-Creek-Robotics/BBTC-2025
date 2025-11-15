@@ -15,7 +15,7 @@ class TeleOp_everything_needed extends LinearOpMode {
     // --- Drive & Mechanism Declarations ---
     private DcMotor flmotor, frmotor, blmotor, brmotor;
     private DcMotor shooter_1, shooter_2, intake, transfer;
-    private Servo intakeServo;
+    private Servo intakeServo; // This is the blocker servo
     private IMU imu;
 
     // --- State variables ---
@@ -23,6 +23,8 @@ class TeleOp_everything_needed extends LinearOpMode {
     private boolean xWasPressed = false;
     private boolean shooterOn = false;
     private boolean bWasPressed = false;
+    private boolean rbWasPressed = false;
+    private boolean shooterHalfOn = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -49,8 +51,8 @@ class TeleOp_everything_needed extends LinearOpMode {
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
         intake = hardwareMap.get(DcMotor.class, "intake");
-        transfer = hardwareMap.get(DcMotor.class, "transfer");       // New
-        intakeServo = hardwareMap.get(Servo.class, "intakeServo");   // New
+        transfer = hardwareMap.get(DcMotor.class, "transfer");
+        intakeServo = hardwareMap.get(Servo.class, "intakeServo"); // blocker servo
 
         // Motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -60,7 +62,7 @@ class TeleOp_everything_needed extends LinearOpMode {
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
         shooter_2.setDirection(DcMotorSimple.Direction.REVERSE);
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
-        transfer.setDirection(DcMotorSimple.Direction.FORWARD); // New
+        transfer.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Motor modes
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -70,7 +72,7 @@ class TeleOp_everything_needed extends LinearOpMode {
         shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        transfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // New
+        transfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -111,13 +113,7 @@ class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setPower(backRightPower / maxPower);
     }
 
-    /** Handles intake, transfer, shooter, and servo logic */
-    /** Handles intake, transfer, shooter, and servo logic */
-    // State variable for right bumper shooter toggle
-    private boolean rbWasPressed = false;
-    private boolean shooterHalfOn = false;
-
-    /** Handles intake, transfer, shooter, and servo logic */
+    /** Handles intake, transfer, shooter, and blocker servo logic */
     private void handleMechanisms() {
         // Intake toggle (X)
         if (gamepad1.x && !xWasPressed) {
@@ -152,20 +148,13 @@ class TeleOp_everything_needed extends LinearOpMode {
         // Set intake power
         intake.setPower(intakeOn ? 0.1 : 0.0);
 
-        // Transfer motor runs at 0.1 if either intake or any shooter is on
+        // Transfer motor and blocker servo run if intake or any shooter is on
         if (intakeOn || shooterOn || shooterHalfOn) {
             transfer.setPower(0.1);
+            intakeServo.setPosition(1.0); // Extend blocker
         } else {
             transfer.setPower(0.0);
-        }
-
-        // Servo logic
-        if (intakeOn) {
-            intakeServo.setPosition(1.0); // Extend when intake is running
-        } else if (shooterOn || shooterHalfOn) {
-            intakeServo.setPosition(0.0); // Retract when shooting
+            intakeServo.setPosition(0.0); // Retract blocker
         }
     }
-
-
 }
