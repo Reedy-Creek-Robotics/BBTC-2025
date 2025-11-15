@@ -1,10 +1,11 @@
-package org.firstinspires.ftc.teamcode.mechanisms;
+package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-@Autonomous(name = "Autonomous 1: Move and Shoot")
-public class AutonomusRedwall extends LinearOpMode {
+
+@Autonomous(name = "AutonomousRedGoal2")
+public class AutonomusRedGoal2 extends LinearOpMode {
     // Drive motors
     private DcMotor flmotor;
     private DcMotor frmotor;
@@ -15,6 +16,8 @@ public class AutonomusRedwall extends LinearOpMode {
     private DcMotor leftShooterWheel;
     private DcMotor rightShooterWheel;
 
+    private DcMotor intake;
+
     // Constants for movement
     private static final double COUNTS_PER_MOTOR_REV = 537.7; // Example for a REV HD Hex Motor
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
@@ -23,6 +26,7 @@ public class AutonomusRedwall extends LinearOpMode {
     private static final double DRIVE_SPEED = 0.5;
     private static final double TURN_SPEED = 0.4;
     private static final double SHOOTER_POWER = 0.85; // Power for shooter wheels
+    private static final double INTAKE_SPEED = 0.1;
 
     @Override
     public void runOpMode() {
@@ -33,6 +37,7 @@ public class AutonomusRedwall extends LinearOpMode {
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
         leftShooterWheel = hardwareMap.get(DcMotor.class, "leftShooterWheel");
         rightShooterWheel = hardwareMap.get(DcMotor.class, "rightShooterWheel");
+        intake = hardwareMap.get(DcMotor.class, "intake");
 
         // Set motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -43,26 +48,37 @@ public class AutonomusRedwall extends LinearOpMode {
         // Shooter wheels often spin opposite directions
         leftShooterWheel.setDirection(DcMotor.Direction.FORWARD);
         rightShooterWheel.setDirection(DcMotor.Direction.REVERSE);
+        intake.setDirection(DcMotor.Direction.FORWARD);
 
         // Reset encoders and set to run with encoders
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftShooterWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightShooterWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         telemetry.addData("Status", "Initialized and ready to run");
         telemetry.update();
 
         waitForStart();
 
+        rotate(25, TURN_SPEED);
+
+        // Run intake motor
+        intake.setPower(INTAKE_SPEED);
+
+
         // Step 1: Move forward by 50 inches
-        moveForward(50, DRIVE_SPEED);
+        moveForward(30, DRIVE_SPEED);
 
         // Step 2: Rotate 180 degrees
         rotate(180, TURN_SPEED);
 
         // Step 3: Spin up shooter wheels and shoot
         shoot();
+
+        // Stop intake motor
+        intake.setPower(0);
     }
 
     private void rotate(double degrees, double speed) {
