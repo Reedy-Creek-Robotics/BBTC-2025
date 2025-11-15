@@ -50,17 +50,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  * Remove or comment out the @Disabled line to adddd this OpMode to the Driver Station OpMode list
  *
  */
-@TeleOp(name = "ControlRobot")
+@TeleOp(name = "ControlRobot joshua")
 //@Disabled
 public class ControlRobot_servo extends OpMode {
     // This declares the four motors needed
-    public Servo servo;
     DcMotor flmotor;
     DcMotor frmotor;
     DcMotor blmotor;
     DcMotor brmotor;
-    DcMotor outtake1;
-    DcMotor outtake2;
 
 
     // This declares the IMU needed to get the current direction the robot is facing
@@ -103,7 +100,6 @@ public class ControlRobot_servo extends OpMode {
                 RevHubOrientationOnRobot(logoDirection, usbDirection);
 
         imu.initialize(new IMU.Parameters(orientationOnRobot));
-        servo = hardwareMap.get(Servo.class, "servo");
     }
 
 
@@ -114,11 +110,7 @@ public class ControlRobot_servo extends OpMode {
         telemetry.addLine("The left joystick sets the robot direction");
         telemetry.addLine("Moving the right joystick left and right turns the robot");
 
-        if (gamepad1.a) {//the y and a buttons are fliped
-            servo.setPosition(1);
-        } else if (gamepad1.b) {
-            servo.setPosition(-1);
-        }
+
 
         // If you press the A button, then you reset the Yaw to be zero from the way
         // the robot is currently pointing
