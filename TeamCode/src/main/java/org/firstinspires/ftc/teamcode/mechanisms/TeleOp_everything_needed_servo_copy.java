@@ -19,7 +19,7 @@ public class TeleOp_everything_needed_servo_copy extends LinearOpMode {
     private DcMotor flmotor, frmotor, blmotor, brmotor;
     private DcMotor shooter_1, shooter_2, intake;
     private IMU imu;
-    private Servo lever;
+    private Servo intakeServo;
 
     // --- State variables ---
     private boolean intakeOn = false;
@@ -128,18 +128,17 @@ public class TeleOp_everything_needed_servo_copy extends LinearOpMode {
         xWasPressed = gamepad1.x;
         intake.setPower(intakeOn ? 1.0 : 0.0);
 
-        if (gamepad1.right_trigger >= 0.5) {
+        if (gamepad1.right_bumper) {
             for(int i = 0; i < 3; i++ ); {
                 shooterOn = true;
                 sleep(1310);
-                lever.setPosition(90);
+                intakeServo.setPosition();
                 sleep(5000);
-                lever.setPosition(0);
+                intakeServo.setPosition(0);
                 shooterOn = false;
                 sleep(2000);
             }
     }
-
 
         if (shooterOn = false) {
             shooter_1.setPower(0);
