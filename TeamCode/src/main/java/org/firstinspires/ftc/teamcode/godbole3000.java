@@ -109,7 +109,7 @@ public class godbole3000 extends OpMode {
     }
 
 
-    
+
 
     private void telemetryAprilTag() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
