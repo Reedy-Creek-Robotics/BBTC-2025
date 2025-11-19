@@ -34,7 +34,7 @@ public class godbole3000 extends OpMode {
         frdrive = hardwareMap.get(DcMotor.class, "frmotor");
         bldrive = hardwareMap.get(DcMotor.class, "blmotor");
         brdrive = hardwareMap.get(DcMotor.class, "brmotor");
-        
+
         bldrive.setDirection(DcMotor.Direction.REVERSE);
         fldrive.setDirection(DcMotor.Direction.REVERSE);
 
@@ -92,22 +92,24 @@ public class godbole3000 extends OpMode {
     }
 
     public void drive(double forward, double right, double rotate) {
-        double frontLeftPower = forward + right + rotate;
-        double frontRightPower = forward - right - rotate;
-        double backRightPower = forward + right - rotate;
-        double backLeftPower = forward - right + rotate;
 
-        double max = Math.max(1.0, Math.max(Math.abs(frontLeftPower),
-                Math.max(Math.abs(frontRightPower),
-                        Math.max(Math.abs(backLeftPower), Math.abs(backRightPower)))));
+        double fl = forward + right + rotate;   // normal
+        double fr = forward + right - rotate;   // 90° rotated
+        double bl = forward - right - rotate;   // 90° rotated
+        double br = forward - right + rotate;   // normal
 
-        double maxSpeed = 1.0;
+        double max = Math.max(1.0, Math.max(Math.abs(fl),
+                Math.max(Math.abs(fr),
+                        Math.max(Math.abs(bl), Math.abs(br)))));
 
-        fldrive.setPower(maxSpeed * frontLeftPower / max);
-        frdrive.setPower(maxSpeed * frontRightPower / max);
-        bldrive.setPower(maxSpeed * backLeftPower / max);
-        brdrive.setPower(maxSpeed * backRightPower / max);
+        fldrive.setPower(fl / max);
+        frdrive.setPower(fr / max);
+        bldrive.setPower(bl / max);
+        brdrive.setPower(br / max);
     }
+
+
+
 
     private void telemetryAprilTag() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
