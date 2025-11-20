@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
 
 @TeleOp(name = "TeleOp: Mecanum (Robot-Relative)", group = "Main")
-class TeleOp_everything_needed extends LinearOpMode {
+public class TeleOp_everything_needed extends LinearOpMode {
 
     // --- Drive & Mechanism Declarations ---
     private DcMotor flmotor, frmotor, blmotor, brmotor;

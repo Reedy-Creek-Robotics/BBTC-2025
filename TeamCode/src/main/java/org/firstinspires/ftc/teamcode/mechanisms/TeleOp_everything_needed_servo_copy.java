@@ -2,6 +2,8 @@
 
 package org.firstinspires.ftc.teamcode.mechanisms;
 
+import android.annotation.SuppressLint;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -12,7 +14,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "TeleOp:all")
+@TeleOp(name = "TeleOp joshua")
 public class TeleOp_everything_needed_servo_copy extends LinearOpMode {
 
     // --- Drive & Mechanism Declarations ---
@@ -24,8 +26,7 @@ public class TeleOp_everything_needed_servo_copy extends LinearOpMode {
     // --- State variables ---
     private boolean intakeOn = false;
     private boolean xWasPressed = false;
-    private boolean shooterOn = false;
-    private boolean bWasPressed = false;
+    private float shooterOn = 0;
     private double flmod = 1;
     private double frmod = 1;
     private double blmod = 1;
@@ -54,8 +55,8 @@ public class TeleOp_everything_needed_servo_copy extends LinearOpMode {
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
-        intake = hardwareMap.get(DcMotor.class, "intake");
-
+        intake = hardwareMap.get(DcMotor.class, "intakeTransfer");
+        intakeServo = hardwareMap.get(Servo.class, "intakeServo");
         // Motor directions (adjust as needed for your robot)
         flmotor.setDirection(DcMotor.Direction.REVERSE);
         blmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -99,27 +100,10 @@ public class TeleOp_everything_needed_servo_copy extends LinearOpMode {
         if (gamepad1.a) imu.resetYaw();
 
         // Field-relative by default
-        if (gamepad1.left_bumper) {
-            drive(forward, right, rotate);  // robot-relative
-            telemetry.addLine("Mode: Robot-Relative");
-        } else {
-            driveFieldRelative(forward, right, rotate); // field-relative
-            telemetry.addLine("Mode: Field-Relative");
-        }
-    }
-
-    /** Implements field-relative control using IMU heading */
-    private void driveFieldRelative(double forward, double right, double rotate) {
-        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
-        // Rotate joystick input by negative robot heading
-        double rotX = right * Math.cos(-botHeading) - forward * Math.sin(-botHeading);
-        double rotY = right * Math.sin(-botHeading) + forward * Math.cos(-botHeading);
-
-        drive(rotY, rotX, rotate);
     }
 
     /** Toggle intake and shooter mechanisms */
+    @SuppressLint("SuspiciousIndentation")
     private void handleMechanisms() {
         // Intake toggle (X)
         if (gamepad1.x && !xWasPressed) {
@@ -130,24 +114,38 @@ public class TeleOp_everything_needed_servo_copy extends LinearOpMode {
 
         if (gamepad1.right_bumper) {
             for(int i = 0; i < 3; i++ ); {
-                shooterOn = true;
+                shooterOn = 1;
                 sleep(1310);
-                intakeServo.setPosition();
-                sleep(5000);
+                intakeServo.setPosition(1);
+                sleep(2000);
                 intakeServo.setPosition(0);
-                shooterOn = false;
+                shooterOn = 0;
                 sleep(2000);
             }
-    }
+        }
+        if (gamepad1.right_trigger >= 0.5) {
+            for(int i = 0; i < 3; i++ ); {
+                shooterOn = 2;
+                sleep(1310);
+                intakeServo.setPosition(1);
+                sleep(2000);
+                intakeServo.setPosition(0);
+                shooterOn = 0;
+                sleep(2000);
+            }
+        }
 
-        if (shooterOn = false) {
+        if (shooterOn == 0) {
             shooter_1.setPower(0);
             shooter_2.setPower(0);
         }
-        else if (shooterOn = true)
-            shooter_1.setPower(1);
-            shooter_2.setPower(1);
-        {
+        else if (shooterOn == 2) {
+            shooter_1.setPower(0.65);
+            shooter_2.setPower(0.65);
+        }
+        if (shooterOn == 1 ){
+            shooter_1.setPower(0.35);
+            shooter_2.setPower(0.35);
 
         }
     }
