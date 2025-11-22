@@ -82,6 +82,7 @@ class TeleOp_everything_needed extends LinearOpMode {
 
         telemetry.addLine("Hardware initialized");
     }
+    //hi pal
 
     /** Handles all driving logic (Robot-Relative Only) */
     private void handleDrive() {
