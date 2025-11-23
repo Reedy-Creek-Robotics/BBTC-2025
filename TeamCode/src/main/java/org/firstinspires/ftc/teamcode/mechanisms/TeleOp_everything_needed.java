@@ -1,58 +1,90 @@
-/* Copyright (c) 2025 FIRST. */
-package org.firstinspires.ftc.teamcode.mechanisms;
+        /* Copyright (c) 2025 FIRST. */
+        package org.firstinspires.ftc.teamcode.mechanisms;
+
+import static org.firstinspires.ftc.teamcode.mechanisms.TestBench.TICKS_PER_REVOLUTION;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
 
-@TeleOp(name = "TeleOp: Mecanum (Robot-Relative)", group = "Main")
-class TeleOp_everything_needed extends LinearOpMode {
+@TeleOp(name = "TeleOp: Mecanum (Robot-Relative)_3")
+public class TeleOp_everything_needed extends LinearOpMode {
 
     // --- Drive & Mechanism Declarations ---
     private DcMotor flmotor, frmotor, blmotor, brmotor;
-    private DcMotor shooter_1, shooter_2, intake, transfer;
-    private Servo intakeServo; // This is the blocker servo
+    private DcMotorEx shooter_1, shooter_2, intakeTransfer;
+    private Servo intakeServo;
+    // This is the blocker servo
     private IMU imu;
 
     // --- State variables ---
-    private boolean intakeOn = false;
-    private boolean xWasPressed = false;
     private boolean shooterOn = false;
     private boolean bWasPressed = false;
-    private boolean rbWasPressed = false;
-    private boolean shooterHalfOn = false;
+    private boolean intakeOn = false;
+    private boolean xWasPressed = false;
+
+    // --- Reversal detection state ---
+    private double lastForward = 0;
+    private double lastRight = 0;
+    private double lastRotate = 0;
+
+    private long lastDirectionChangeTime = 0;
+    private static final long REVERSAL_DELAY_MS = 120;
+
+    // --- Slew rate limiter state ---
+    private double limitedForward = 0;
+    private double limitedRight = 0;
+    private double limitedRotate = 0;
+
+    // Slew rate settings (tune as needed)
+    private static final double MAX_ACCEL = 0.08;   // acceleration per loop
+    private static final double MAX_DECEL = 0.12;   // deceleration per loop
+
+    private double counter;
+
+    private double shootingpower;
+
+    private double servoCounter;
+
+//    private boolean rbWasPressed = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initializeHardware();
 
-        telemetry.addLine("Initialization Complete: Press Play!");
+        initializeHardware();
         telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
+
             handleDrive();
             handleMechanisms();
+
             telemetry.update();
         }
     }
 
-    /** Initialize motors, servo, and IMU */
+
+    /**
+     * Initialize motors, servo, and IMU
+     */
     private void initializeHardware() {
-        shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
-        shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
+        shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
+        shooter_2 = hardwareMap.get(DcMotorEx.class, "shooter_2");
+
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        transfer = hardwareMap.get(DcMotor.class, "transfer");
-        intakeServo = hardwareMap.get(Servo.class, "intakeServo"); // blocker servo
+        intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
+        intakeServo = hardwareMap.get(Servo.class, "intakeServo");
+
 
         // Motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -61,8 +93,7 @@ class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
         shooter_2.setDirection(DcMotorSimple.Direction.REVERSE);
-        intake.setDirection(DcMotorSimple.Direction.FORWARD);
-        transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+        intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Motor modes
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -71,8 +102,11 @@ class TeleOp_everything_needed extends LinearOpMode {
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        transfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        counter = 0;
+
+        servoCounter = 0;
 
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -83,37 +117,119 @@ class TeleOp_everything_needed extends LinearOpMode {
         telemetry.addLine("Hardware initialized");
     }
 
-    /** Handles all driving logic (Robot-Relative Only) */
+    /** Driving logic with reversal protection + slew rate limiting */
+    /**
+     * Handles all driving logic (Robot-Relative Only)
+     */
     private void handleDrive() {
         telemetry.addLine("\n--- Drive Controls ---");
         telemetry.addLine("Mode: Robot-Relative");
 
+        double forward = -gamepad1.left_stick_y;
+        double right = gamepad1.left_stick_x;
+        double rotate = gamepad1.right_stick_x;
+
+        long now = System.currentTimeMillis();
+
+        // --- Detect reversals ---
+        boolean forwardReversal =
+                (Math.signum(forward) == -Math.signum(lastForward)) &&
+                        Math.abs(forward) > 0.3 && Math.abs(lastForward) > 0.3;
+
+        boolean strafeReversal =
+                (Math.signum(right) == -Math.signum(lastRight)) &&
+                        Math.abs(right) > 0.3 && Math.abs(lastRight) > 0.3;
+
+        if (forwardReversal || strafeReversal) {
+            lastDirectionChangeTime = now;
+        }
+
+        // --- Apply reversal pause ---
+        if (now - lastDirectionChangeTime < REVERSAL_DELAY_MS) {
+            forward = 0;
+            right = 0;
+        }
+
+        // --- Apply slew rate limiting ---
+        limitedForward = applySlewRate(limitedForward, forward);
+        limitedRight = applySlewRate(limitedRight, right);
+        limitedRotate = applySlewRate(limitedRotate, rotate);
+
+        // Save for next-loop reversal detection
+        lastForward = forward;
+        lastRight = right;
+        lastRotate = rotate;
+
+        drive(limitedForward, limitedRight, limitedRotate);
+    }
+
+    /**
+     * Slew rate limiter function
+     */
+    private double applySlewRate(double current, double target) {
+        double delta = target - current;
+
+        if (delta > 0) {
+            delta = Math.min(delta, MAX_ACCEL);
+        } else {
+            delta = Math.max(delta, -MAX_DECEL);
+        }
         double forward = -gamepad1.left_stick_y;  // forward/backward
         double right = gamepad1.left_stick_x;     // strafing
         double rotate = gamepad1.right_stick_x;   // rotation
 
-        drive(forward, right, rotate);
+        return current + delta;
     }
 
-    /** Standard mecanum drive kinematics (Robot-Relative) */
+    /** Standard mecanum drive */
+    /**
+     * Standard mecanum drive kinematics (Robot-Relative)
+     */
     private void drive(double forward, double right, double rotate) {
-        double frontLeftPower  = forward + right + rotate;
-        double frontRightPower = forward - right - rotate;
-        double backLeftPower   = forward - right + rotate;
-        double backRightPower  = forward + right - rotate;
+        double fl = forward + right + rotate;
+        double fr = forward - right - rotate;
+        double bl = forward - right + rotate;
+        double br = forward + right - rotate;
+//        double frontLeftPower = forward + right + rotate;
+//        double frontRightPower = forward - right - rotate;
+//        double backLeftPower = forward - right + rotate;
+//        double backRightPower = forward + right - rotate;
 
         double maxPower = Math.max(1.0, Math.max(
-                Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
-                Math.max(Math.abs(backLeftPower), Math.abs(backRightPower))
+                Math.max(Math.abs(fl), Math.abs(fr)),
+                Math.max(Math.abs(bl), Math.abs(br))
         ));
 
-        flmotor.setPower(frontLeftPower / maxPower);
-        frmotor.setPower(frontRightPower / maxPower);
-        blmotor.setPower(backLeftPower / maxPower);
-        brmotor.setPower(backRightPower / maxPower);
+        flmotor.setPower(fl / maxPower);
+        frmotor.setPower(fr / maxPower);
+        blmotor.setPower(bl / maxPower);
+        brmotor.setPower(br / maxPower);
+//        flmotor.setPower(frontLeftPower / maxPower);
+//        frmotor.setPower(frontRightPower / maxPower);
+//        blmotor.setPower(backLeftPower / maxPower);
+//        brmotor.setPower(backRightPower / maxPower);
     }
 
-    /** Handles intake, transfer, shooter, and blocker servo logic */
+    /** Mechanisms (unchanged from your original) */
+    /**
+     * Mechanisms
+     */
+    private void printRpm() {
+        telemetry.addData("Shooter 1 RPM", "%.2f", getRpm(shooter_1));
+        telemetry.addData("Shooter 2 RPM", "%.2f", getRpm(shooter_2));
+        telemetry.update();
+    }
+
+    private double getRpm(DcMotorEx motor) {
+        // getVelocity() returns ticks per second.
+        // To convert ticks/sec to revolutions/minute:
+        // (ticks/sec) * (60 sec/min) / (ticks/rev) = rev/min
+        return (motor.getVelocity() * 60) / TICKS_PER_REVOLUTION;
+    }
+
+    /**
+     * Handles intake, transfer, shooter, and blocker servo logic
+     */
     private void handleMechanisms() {
         // Intake toggle (X)
         if (gamepad1.x && !xWasPressed) {
@@ -124,37 +240,56 @@ class TeleOp_everything_needed extends LinearOpMode {
         // Shooter toggle (B) - full power
         if (gamepad1.b && !bWasPressed) {
             shooterOn = !shooterOn;
+//            intakeOn = !intakeOn;
         }
         bWasPressed = gamepad1.b;
 
-        // Shooter toggle (Right Bumper) - half power
-        if (gamepad1.right_bumper && !rbWasPressed) {
-            shooterHalfOn = !shooterHalfOn;
+        // --- Shooter half toggle (RB button) ---
+        if (gamepad1.y) {
+            counter = counter + 1;
         }
-        rbWasPressed = gamepad1.right_bumper;
+        if (counter == 1) {
+            shootingpower = 0.8;
+        } else if (counter == 2) {
+            shootingpower = 0.7;
+        } else if (counter == 3) {
+            shootingpower = 0.6;
+        } else if (counter == 4) {
+            shootingpower = 0.5;
+        } else if (counter > 4) {
+            shootingpower = 0;
+            counter = 0;
+        }
 
-        // Set shooter power
+        // --- SHOOTER POWER ---
         if (shooterOn) {
-            shooter_1.setPower(1.0);
-            shooter_2.setPower(1.0);
-        } else if (shooterHalfOn) {
-            shooter_1.setPower(0.5);
-            shooter_2.setPower(0.5);
-        } else {
-            shooter_1.setPower(0.0);
+            shooter_1.setPower(shootingpower);
+            shooter_2.setPower(shootingpower);
+            telemetry.addData("shooting power:", shootingpower);
+        } else{
             shooter_2.setPower(0.0);
+            shooter_1.setPower(0.0);
+
+        }
+        // --- INTAKE POWER ---
+        if(intakeOn || shooterOn){
+            intakeTransfer.setPower(1.0);
+        } else{
+            intakeTransfer.setPower(0.0);
         }
 
-        // Set intake power
-        intake.setPower(intakeOn ? 0.1 : 0.0);
+        telemetry.addData("servo position", intakeServo.getPosition());
 
-        // Transfer motor and blocker servo run if intake or any shooter is on
-        if (intakeOn || shooterOn || shooterHalfOn) {
-            transfer.setPower(0.1);
-            intakeServo.setPosition(1.0); // Extend blocker
-        } else {
-            transfer.setPower(0.0);
-            intakeServo.setPosition(0.0); // Retract blocker
+        // --- SERVO LOGIC (clean & reliable) ---
+        if (gamepad1.a) {
+            servoCounter = servoCounter + 1;
+        }
+        if (servoCounter == 1) {
+            intakeServo.setPosition(0.8);
+        } else if (servoCounter == 2) {
+            intakeServo.setPosition(0.38);
+        } else if (servoCounter > 2) {
+            servoCounter = 0;
         }
     }
 }
