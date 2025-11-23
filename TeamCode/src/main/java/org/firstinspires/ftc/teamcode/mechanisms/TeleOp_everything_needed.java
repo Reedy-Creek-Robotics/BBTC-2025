@@ -31,7 +31,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
     // --- Reversal detection state ---
     private double lastForward = 0;
     private double lastRight = 0;
-    private double lastRotate = 0;
 
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
@@ -45,27 +44,17 @@ public class TeleOp_everything_needed extends LinearOpMode {
     private static final double MAX_ACCEL = 0.08;   // acceleration per loop
     private static final double MAX_DECEL = 0.12;   // deceleration per loop
 
-    private double counter;
-
-    private double shootingpower;
-
     private double servoCounter;
 
-//    private boolean rbWasPressed = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
-
         initializeHardware();
         telemetry.update();
-
         waitForStart();
-
         while (opModeIsActive()) {
-
             handleDrive();
             handleMechanisms();
-
             telemetry.update();
         }
     }
@@ -85,7 +74,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
         intakeServo = hardwareMap.get(Servo.class, "intakeServo");
 
-
         // Motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
         blmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -103,9 +91,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        counter = 0;
-
         servoCounter = 0;
 
         // IMU setup
@@ -158,7 +143,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         // Save for next-loop reversal detection
         lastForward = forward;
         lastRight = right;
-        lastRotate = rotate;
 
         drive(limitedForward, limitedRight, limitedRotate);
     }
@@ -190,10 +174,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         double fr = forward - right - rotate;
         double bl = forward - right + rotate;
         double br = forward + right - rotate;
-//        double frontLeftPower = forward + right + rotate;
-//        double frontRightPower = forward - right - rotate;
-//        double backLeftPower = forward - right + rotate;
-//        double backRightPower = forward + right - rotate;
 
         double maxPower = Math.max(1.0, Math.max(
                 Math.max(Math.abs(fl), Math.abs(fr)),
@@ -204,10 +184,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         frmotor.setPower(fr / maxPower);
         blmotor.setPower(bl / maxPower);
         brmotor.setPower(br / maxPower);
-//        flmotor.setPower(frontLeftPower / maxPower);
-//        frmotor.setPower(frontRightPower / maxPower);
-//        blmotor.setPower(backLeftPower / maxPower);
-//        brmotor.setPower(backRightPower / maxPower);
     }
 
     /** Mechanisms (unchanged from your original) */
@@ -240,37 +216,18 @@ public class TeleOp_everything_needed extends LinearOpMode {
         // Shooter toggle (B) - full power
         if (gamepad1.b && !bWasPressed) {
             shooterOn = !shooterOn;
-//            intakeOn = !intakeOn;
         }
         bWasPressed = gamepad1.b;
 
-        // --- Shooter half toggle (RB button) ---
-        if (gamepad1.y) {
-            counter = counter + 1;
-        }
-        if (counter == 1) {
-            shootingpower = 0.8;
-        } else if (counter == 2) {
-            shootingpower = 0.7;
-        } else if (counter == 3) {
-            shootingpower = 0.6;
-        } else if (counter == 4) {
-            shootingpower = 0.5;
-        } else if (counter > 4) {
-            shootingpower = 0;
-            counter = 0;
-        }
-
         // --- SHOOTER POWER ---
         if (shooterOn) {
-            shooter_1.setPower(shootingpower);
-            shooter_2.setPower(shootingpower);
-            telemetry.addData("shooting power:", shootingpower);
+            shooter_1.setPower(0.8);
+            shooter_2.setPower(0.8);
         } else{
             shooter_2.setPower(0.0);
             shooter_1.setPower(0.0);
-
         }
+
         // --- INTAKE POWER ---
         if(intakeOn || shooterOn){
             intakeTransfer.setPower(1.0);
@@ -278,10 +235,8 @@ public class TeleOp_everything_needed extends LinearOpMode {
             intakeTransfer.setPower(0.0);
         }
 
-        telemetry.addData("servo position", intakeServo.getPosition());
-
         // --- SERVO LOGIC (clean & reliable) ---
-        if (gamepad1.a) {
+        if (gamepad1.y) {
             servoCounter = servoCounter + 1;
         }
         if (servoCounter == 1) {
@@ -290,6 +245,11 @@ public class TeleOp_everything_needed extends LinearOpMode {
             intakeServo.setPosition(0.38);
         } else if (servoCounter > 2) {
             servoCounter = 0;
+        }
+        if(intakeServo.getPosition() == 0.8){
+            telemetry.addLine("servo position is: UP");
+        } else{
+            telemetry.addLine("servo position is: DOWN");
         }
     }
 }
