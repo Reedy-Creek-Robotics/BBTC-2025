@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.mechanisms;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Outreach Robot: Robot Relative Drive", group = "Robot")
 
-public class godbole3000 extends OpMode {
+public class TeleOpOutreach extends OpMode {
 
     private DcMotor fldrive;
     private DcMotor frdrive;
