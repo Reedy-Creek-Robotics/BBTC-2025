@@ -71,8 +71,9 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
 
 
 
-        rotate(180, TURN_SPEED);
+        rotate(90, TURN_SPEED);
 
+        
 
         moveForward(35,DRIVE_SPEED);
 
