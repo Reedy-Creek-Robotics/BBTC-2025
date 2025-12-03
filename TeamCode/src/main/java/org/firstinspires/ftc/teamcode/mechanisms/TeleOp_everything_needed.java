@@ -25,7 +25,11 @@ public class TeleOp_everything_needed extends LinearOpMode {
     // --- State variables ---
     private boolean shooterOn = false;
     private boolean bWasPressed = false;
+
+    private boolean ywasPressed = false;
     private boolean intakeOn = false;
+
+    private boolean servoUp = false;
     private boolean xWasPressed = false;
 
     // --- Reversal detection state ---
@@ -44,7 +48,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
     private static final double MAX_ACCEL = 0.08;   // acceleration per loop
     private static final double MAX_DECEL = 0.12;   // deceleration per loop
 
-    private double servoCounter;
 
 
     @Override
@@ -91,7 +94,6 @@ public class TeleOp_everything_needed extends LinearOpMode {
         shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        servoCounter = 0;
 
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -219,6 +221,11 @@ public class TeleOp_everything_needed extends LinearOpMode {
         }
         bWasPressed = gamepad1.b;
 
+        if (gamepad1.y && !ywasPressed) {
+            servoUp = !servoUp;
+        }
+        ywasPressed = gamepad1.y;
+
         // --- SHOOTER POWER ---
         if (shooterOn) {
             shooter_1.setPower(0.8);
@@ -226,6 +233,11 @@ public class TeleOp_everything_needed extends LinearOpMode {
         } else{
             shooter_2.setPower(0.0);
             shooter_1.setPower(0.0);
+        }
+        if(servoUp) {
+            intakeServo.setPosition(0.8);
+        } else{
+            intakeServo.setPosition(0.38);
         }
 
         // --- INTAKE POWER ---
@@ -236,16 +248,7 @@ public class TeleOp_everything_needed extends LinearOpMode {
         }
 
         // --- SERVO LOGIC (clean & reliable) ---
-        if (gamepad1.y) {
-            servoCounter = servoCounter + 1;
-        }
-        if (servoCounter == 1) {
-            intakeServo.setPosition(0.8);
-        } else if (servoCounter == 2) {
-            intakeServo.setPosition(0.38);
-        } else if (servoCounter > 2) {
-            servoCounter = 0;
-        }
+
         if(intakeServo.getPosition() == 0.8){
             telemetry.addLine("servo position is: UP");
         } else{

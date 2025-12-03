@@ -23,7 +23,7 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
     // Constants
     private static final double COUNTS_PER_MOTOR_REV = 537.7;
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
-    private static final double WHEEL_DIAMETER_INCHES = 4.0;
+    private static final double WHEEL_DIAMETER_INCHES = 4.25;
     private static final double COUNTS_PER_INCH =
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
@@ -55,26 +55,26 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
         // 1) Move forward 50 inches while intake is ON
         activateIntake(false);
 
-        moveForward(45, DRIVE_SPEED);
+        moveForward(63, DRIVE_SPEED);
 
 
 
         // 3) Spin up shooter and fire
 
-        intakeServo.setPosition(0.8);
+        /*intakeServo.setPosition(0.8);
         shooter_1.setPower(0.5);
         shooter_2.setPower(0.5);
         sleep(3000);
         intakeTransfer.setPower(1);
         intakeServo.setPosition(0.38);
-        sleep(10000);
+        sleep(10000);*/
 
 
 
-        rotate(130, TURN_SPEED);
+        rotate(180, TURN_SPEED);
 
 
-        moveForward(25,DRIVE_SPEED);
+        moveForward(35,DRIVE_SPEED);
 
 
 
@@ -109,6 +109,10 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
         shooter_2.setDirection(DcMotor.Direction.REVERSE);
         intakeTransfer.setDirection(DcMotor.Direction.FORWARD);
 
+        flmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        blmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        brmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Drive encoders
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);

@@ -5,8 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous(name = "Autonomous 1: Move and Shoot (Updated Logic)")
-public class AutonomusStraightToUseAtScrimage extends LinearOpMode {
+@Autonomous(name = "Autonomous 1: Move Straight  ( Blue)")
+
+public class AutonomusStraightBlueToUseAtScimage extends LinearOpMode {
 
     // Drive motors
     private DcMotor flmotor, frmotor, blmotor, brmotor;
@@ -23,7 +24,7 @@ public class AutonomusStraightToUseAtScrimage extends LinearOpMode {
     // Constants
     private static final double COUNTS_PER_MOTOR_REV = 537.7;
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
-    private static final double WHEEL_DIAMETER_INCHES = 4.0;
+    private static final double WHEEL_DIAMETER_INCHES = 4.25;//4.00
     private static final double COUNTS_PER_INCH =
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
@@ -54,7 +55,9 @@ public class AutonomusStraightToUseAtScrimage extends LinearOpMode {
 
         // 1) rotate 15 degrees while intake is ON
         activateIntake(false);
-        rotate(15,TURN_SPEED);
+        sleep(20);
+
+        /*rotate(15,TURN_SPEED);
 
         // 3) Spin up shooter and fire
 
@@ -64,9 +67,11 @@ public class AutonomusStraightToUseAtScrimage extends LinearOpMode {
         sleep(3000);
         intakeTransfer.setPower(1);
         intakeServo.setPosition(0.38);
-        sleep(10000);
+        sleep(10000);*/
 
-        moveForward(30, DRIVE_SPEED);
+        moveForward(5, DRIVE_SPEED);
+        rotate(-180,TURN_SPEED);
+        moveForward(17,DRIVE_SPEED);
 
 
         // End
@@ -99,6 +104,11 @@ public class AutonomusStraightToUseAtScrimage extends LinearOpMode {
         shooter_1.setDirection(DcMotor.Direction.FORWARD);
         shooter_2.setDirection(DcMotor.Direction.REVERSE);
         intakeTransfer.setDirection(DcMotor.Direction.FORWARD);
+
+        flmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        blmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        brmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Drive encoders
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -246,4 +256,5 @@ public class AutonomusStraightToUseAtScrimage extends LinearOpMode {
         blmotor.setPower(power);
         brmotor.setPower(power);
     }
+
 }

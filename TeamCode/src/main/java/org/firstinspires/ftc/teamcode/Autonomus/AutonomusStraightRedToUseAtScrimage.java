@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous(name = "Autonomous 1: Move and Shoot (Updated Logic Red)")
-public class AutonomusRedGoalToUseAtScrimage extends LinearOpMode {
+@Autonomous(name = "Autonomous 1: Straight (Red)")
+public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
 
     // Drive motors
     private DcMotor flmotor, frmotor, blmotor, brmotor;
@@ -23,7 +23,7 @@ public class AutonomusRedGoalToUseAtScrimage extends LinearOpMode {
     // Constants
     private static final double COUNTS_PER_MOTOR_REV = 537.7;
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
-    private static final double WHEEL_DIAMETER_INCHES = 4.25;
+    private static final double WHEEL_DIAMETER_INCHES = 4.25;//4.00
     private static final double COUNTS_PER_INCH =
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
@@ -52,27 +52,25 @@ public class AutonomusRedGoalToUseAtScrimage extends LinearOpMode {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        // 1) Move forward 50 inches while intake is ON
-        moveForward(63, DRIVE_SPEED);
+        // 1) rotate 15 degrees while intake is ON
+        activateIntake(false);
 
-
+        sleep(20);
+        /*rotate(15,TURN_SPEED);
 
         // 3) Spin up shooter and fire
 
-        /*intakeServo.setPosition(0.8);
-        shooter_1.setPower(0.5);
-        shooter_2.setPower(0.5);
+        intakeServo.setPosition(0.8);
+        shooter_1.setPower(0.8);
+        shooter_2.setPower(0.8);
         sleep(3000);
         intakeTransfer.setPower(1);
         intakeServo.setPosition(0.38);
         sleep(10000);*/
 
-
-        rotate(-90, TURN_SPEED);
-
-
-        moveForward(35,DRIVE_SPEED);
-
+        moveForward(5, DRIVE_SPEED);
+        rotate(180,TURN_SPEED);
+        moveForward(17,DRIVE_SPEED);
 
 
         // End
