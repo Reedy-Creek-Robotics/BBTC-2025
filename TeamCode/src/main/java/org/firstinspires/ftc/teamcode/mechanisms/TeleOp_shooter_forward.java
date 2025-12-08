@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
 
-@TeleOp(name = "TeleOp: Mecanum (Robot-Relative intake forward)_3")
+@TeleOp(name = "TeleOp: Mecanum (Robot-Relative Shooter forward)_3")
 public class TeleOp_shooter_forward extends LinearOpMode {
 
     // --- Drive & Mechanism Declarations ---
@@ -33,7 +33,7 @@ public class TeleOp_shooter_forward extends LinearOpMode {
 
     // --- Shooter speed control ---
     private static final double SHOOTER_TARGET_RPM = 5400;
-    private static final double SHOOTER_BASE_POWER = 0.90;
+    private static final double SHOOTER_BASE_POWER = 0.95;
     private static final double SHOOTER_MAX_POWER = 1.00;
     private static final double SHOOTER_BOOST_POWER = 0.98;
 
@@ -60,7 +60,6 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         telemetry.update();
         waitForStart();
         intakeServo.setPosition(0.8);
-
 
         while (opModeIsActive()) {
             handleDrive();
@@ -117,12 +116,11 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         telemetry.addLine("\n--- Drive Controls ---");
         telemetry.addLine("Mode: Robot-Relative");
 
-        double forward = -gamepad1.left_stick_y;
-        double right = gamepad1.left_stick_x;
+        double forward = gamepad1.left_stick_y; // This makes shooter side be the forward direction
+        double right = -gamepad1.left_stick_x;
         double rotate = gamepad1.right_stick_x;
 
         long now = System.currentTimeMillis();
-
 
         // Detect movement reversals
         boolean forwardReversal =
