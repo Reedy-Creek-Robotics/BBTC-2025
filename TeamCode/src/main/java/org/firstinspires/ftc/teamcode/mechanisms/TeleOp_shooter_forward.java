@@ -33,10 +33,6 @@ public class TeleOp_shooter_forward extends LinearOpMode {
 
     // --- Shooter speed control ---
     private static final double SHOOTER_TARGET_RPM = 5400;
-    private static final double SHOOTER_BASE_POWER = 0.95;
-    private static final double SHOOTER_MAX_POWER = 1.00;
-    private static final double SHOOTER_BOOST_POWER = 0.98;
-
     private boolean shooterReady = false;
 
     // --- Reversal detection ---
@@ -52,7 +48,6 @@ public class TeleOp_shooter_forward extends LinearOpMode {
 
     private static final double MAX_ACCEL = 0.08;
     private static final double MAX_DECEL = 0.12;
-
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -98,9 +93,13 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         blmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // PIDF (recommended starting values for shooter)
+        shooter_1.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 12.0);
+        shooter_2.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 12.0);
 
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -116,13 +115,12 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         telemetry.addLine("\n--- Drive Controls ---");
         telemetry.addLine("Mode: Robot-Relative");
 
-        double forward = gamepad1.left_stick_y; // This makes shooter side be the forward direction
+        double forward = gamepad1.left_stick_y;
         double right = -gamepad1.left_stick_x;
         double rotate = gamepad1.right_stick_x;
 
         long now = System.currentTimeMillis();
 
-        // Detect movement reversals
         boolean forwardReversal =
                 (Math.signum(forward) == -Math.signum(lastForward)) &&
                         Math.abs(forward) > 0.3 &&
@@ -136,13 +134,11 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         if (forwardReversal || strafeReversal)
             lastDirectionChangeTime = now;
 
-        // Apply reversal pause
         if (now - lastDirectionChangeTime < REVERSAL_DELAY_MS) {
             forward = 0;
             right = 0;
         }
 
-        // Apply slew rate limiter
         limitedForward = applySlewRate(limitedForward, forward);
         limitedRight = applySlewRate(limitedRight, right);
         limitedRotate = applySlewRate(limitedRotate, rotate);
@@ -153,7 +149,6 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         drive(limitedForward, limitedRight, limitedRotate);
     }
 
-    /** Slew rate limiter */
     private double applySlewRate(double current, double target) {
         double delta = target - current;
 
@@ -163,7 +158,6 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         return current + delta;
     }
 
-    /** Standard robot-relative mecanum drive */
     private void drive(double forward, double right, double rotate) {
         double fl = forward + right + rotate;
         double fr = forward - right - rotate;
@@ -181,64 +175,54 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         brmotor.setPower(br / maxPower);
     }
 
-    /** RPM calculation */
     private double getRpm(DcMotorEx motor) {
         return (motor.getVelocity() * 60) / TICKS_PER_REVOLUTION;
     }
 
-    /** Mechanism controls: shooter, intake, servo (SMART FEED REMOVED) */
+    /** PIDF Shooter + Intake + Servo */
     private void handleMechanisms() {
 
-        // Intake toggle (X)
+        // Intake toggle
         if (gamepad1.x && !xWasPressed) intakeOn = !intakeOn;
         xWasPressed = gamepad1.x;
 
-        // Shooter toggle (B)
+        // Shooter toggle
         if (gamepad1.b && !bWasPressed) shooterOn = !shooterOn;
         bWasPressed = gamepad1.b;
 
-        // Blocker servo toggle (Y)
+        // Servo toggle
         if (gamepad1.y && !yWasPressed) servoUp = !servoUp;
         yWasPressed = gamepad1.y;
-        // Servo position
+
         intakeServo.setPosition(servoUp ? 0.8 : 0.38);
 
-        // Shooter RPM Control (unchanged)
-        double rpm1 = getRpm(shooter_1);
-        double rpm2 = getRpm(shooter_2);
-        double avgRpm = (rpm1 + rpm2) / 2.0;
+        // Convert RPM → ticks/sec
+        double targetVelocity = (SHOOTER_TARGET_RPM / 60.0) * TICKS_PER_REVOLUTION;
 
         if (shooterOn) {
+            // PIDF velocity control
+            shooter_1.setVelocity(targetVelocity);
+            shooter_2.setVelocity(targetVelocity);
 
-            double shooterPower;
+            // Current RPM
+            double rpm1 = getRpm(shooter_1);
+            double rpm2 = getRpm(shooter_2);
+            double avgRpm = (rpm1 + rpm2) / 2.0;
 
-            if (avgRpm < SHOOTER_TARGET_RPM) {
-                //intakeServo.setPosition(0.8);
-                shooterPower = SHOOTER_BOOST_POWER;
-            } else {
-                shooterPower = SHOOTER_BASE_POWER;
-            }
+            shooterReady = Math.abs(avgRpm - SHOOTER_TARGET_RPM) < 75;
 
-            shooterPower = Math.min(shooterPower, SHOOTER_MAX_POWER);
-
-            shooter_1.setPower(shooterPower);
-            shooter_2.setPower(shooterPower);
-
-            shooterReady = avgRpm >= SHOOTER_TARGET_RPM;
-
+            telemetry.addData("Shooter RPM Avg", avgRpm);
+            telemetry.addData("Shooter Ready", shooterReady);
         } else {
-            shooter_1.setPower(0.0);
-            shooter_2.setPower(0.0);
+            shooter_1.setPower(0);
+            shooter_2.setPower(0);
             shooterReady = false;
         }
 
-        // Intake: simple toggle (SMART FEED REMOVED)
+        // Intake
         if (intakeOn) intakeTransfer.setPower(1.0);
         else          intakeTransfer.setPower(0.0);
 
-        // Telemetry
-        telemetry.addData("Shooter RPM Avg", avgRpm);
-        telemetry.addData("Shooter Ready", shooterReady);
         telemetry.addLine(servoUp ? "Gate: UP" : "Gate: DOWN");
     }
 }
