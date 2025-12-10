@@ -98,8 +98,8 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // PIDF (recommended starting values for shooter)
-        shooter_1.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 12.0);
-        shooter_2.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 12.0);
+        shooter_1.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);
+        shooter_2.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);
 
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
