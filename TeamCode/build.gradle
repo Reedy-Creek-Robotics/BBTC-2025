@@ -25,6 +25,7 @@ android {
 
 dependencies {
     implementation project(":FtcRobotController") // or whatever your SDK module is named
+    implementation 'org.openftc:easyopencv:1.6.2'
 
 }
 
