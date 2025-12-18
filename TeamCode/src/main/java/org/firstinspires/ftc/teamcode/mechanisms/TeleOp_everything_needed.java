@@ -102,6 +102,9 @@ public class TeleOp_everything_needed extends LinearOpMode {
         telemetry.addLine("Mode: Robot-Relative");
 =======
         telemetry.addLine("Press A to reset Yaw");
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
         double forward = -gamepad1.left_stick_y;  // forward/backward
@@ -142,9 +145,16 @@ public class TeleOp_everything_needed extends LinearOpMode {
         }
     }
     
+<<<<<<< Updated upstream
 >>>>>>> Stashed changes
 
     /** Handles intake, transfer, shooter, and blocker servo logic */
+=======
+
+    /**
+     * Handles all mechanism-related gamepad input.
+     */
+>>>>>>> Stashed changes
     private void handleMechanisms() {
         // Intake toggle (X)
         if (gamepad1.x && !xWasPressed) {
