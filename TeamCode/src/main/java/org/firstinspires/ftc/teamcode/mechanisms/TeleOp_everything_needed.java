@@ -9,7 +9,19 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
 
+<<<<<<< Updated upstream
 @TeleOp(name = "TeleOp: Mecanum (Robot-Relative)", group = "Main")
+=======
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+
+/**
+ * This TeleOp OpMode combines Field-Relative Mecanum Drive, Mechanism Controls,
+ * and Live AprilTag Vision Telemetry using a LinearOpMode structure.
+ */
+@TeleOp(name = "TeleOp: main")
+
+>>>>>>> Stashed changes
 public class TeleOp_everything_needed extends LinearOpMode {
 
     // --- Drive & Mechanism Declarations ---
@@ -86,12 +98,17 @@ public class TeleOp_everything_needed extends LinearOpMode {
     /** Handles all driving logic (Robot-Relative Only) */
     private void handleDrive() {
         telemetry.addLine("\n--- Drive Controls ---");
+<<<<<<< Updated upstream
         telemetry.addLine("Mode: Robot-Relative");
+=======
+        telemetry.addLine("Press A to reset Yaw");
+>>>>>>> Stashed changes
 
         double forward = -gamepad1.left_stick_y;  // forward/backward
         double right = gamepad1.left_stick_x;     // strafing
         double rotate = gamepad1.right_stick_x;   // rotation
 
+<<<<<<< Updated upstream
         drive(forward, right, rotate);
     }
 
@@ -112,6 +129,20 @@ public class TeleOp_everything_needed extends LinearOpMode {
         blmotor.setPower(backLeftPower / maxPower);
         brmotor.setPower(backRightPower / maxPower);
     }
+=======
+        // Reset Yaw
+        if (gamepad1.a) {
+            imu.resetYaw();
+        }
+
+        // Drive Mode Selection
+        if (gamepad1.left_bumper) {
+            drive(forward, right, rotate); // Robot Relative
+        } else {
+        }
+    }
+    
+>>>>>>> Stashed changes
 
     /** Handles intake, transfer, shooter, and blocker servo logic */
     private void handleMechanisms() {
