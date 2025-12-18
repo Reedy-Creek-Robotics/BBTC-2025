@@ -30,7 +30,7 @@ public class godbole3000 extends OpMode {
         bldrive = hardwareMap.get(DcMotor.class, "blmotor");
         brdrive = hardwareMap.get(DcMotor.class, "brmotor");
 
-        // reverse left motors
+        bldrive.setDirection(DcMotor.Direction.REVERSE);
         fldrive.setDirection(DcMotor.Direction.REVERSE);
         bldrive.setDirection(DcMotor.Direction.REVERSE);
 

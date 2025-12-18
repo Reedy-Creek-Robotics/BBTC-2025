@@ -1,11 +1,11 @@
-package org.firstinspires.ftc.teamcode.mechanisms;
+package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "Autonomous 1: Move and Shoot")
-public class AutonomusBlue extends LinearOpMode {
+public class AutonomusRedGoal extends LinearOpMode {
     // Drive motors
     private DcMotor flmotor;
     private DcMotor frmotor;
@@ -13,8 +13,8 @@ public class AutonomusBlue extends LinearOpMode {
     private DcMotor brmotor;
 
     // Shooter motors (twin wheels)
-    private DcMotor leftShooterWheel;
-    private DcMotor rightShooterWheel;
+    private DcMotor shooter1;
+    private DcMotor shooter2;
 
     // Constants for movement
     private static final double COUNTS_PER_MOTOR_REV = 537.7; // Example for a REV HD Hex Motor
@@ -32,8 +32,8 @@ public class AutonomusBlue extends LinearOpMode {
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
-        leftShooterWheel = hardwareMap.get(DcMotor.class, "leftShooterWheel");
-        rightShooterWheel = hardwareMap.get(DcMotor.class, "rightShooterWheel");
+        shooter1 = hardwareMap.get(DcMotor.class, "leftShooterWheel");
+        shooter2 = hardwareMap.get(DcMotor.class, "rightShooterWheel");
 
         // Set motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -42,28 +42,32 @@ public class AutonomusBlue extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
         // Shooter wheels often spin opposite directions
-        leftShooterWheel.setDirection(DcMotor.Direction.FORWARD);
-        rightShooterWheel.setDirection(DcMotor.Direction.REVERSE);
+        shooter1.setDirection(DcMotor.Direction.FORWARD);
+        shooter2.setDirection(DcMotor.Direction.REVERSE);
 
         // Reset encoders and set to run with encoders
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftShooterWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightShooterWheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooter1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         telemetry.addData("Status", "Initialized and ready to run");
         telemetry.update();
 
         waitForStart();
 
-        // Step 1: Move forward by 77 inches
-        moveForward(77, DRIVE_SPEED);
+        // Step 1: Move forward by 50 inches
+        moveForward(50, DRIVE_SPEED);
 
-        // Step 2: Rotate 45 degrees
-        rotate(315, TURN_SPEED);
+        // Step 2: Rotate 180 degrees
+        rotate(180, TURN_SPEED);
 
         // Step 3: Spin up shooter wheels and shoot
         shoot();
+
+        rotate(255, TURN_SPEED);
+
+
     }
 
     private void rotate(double degrees, double speed) {
@@ -93,13 +97,7 @@ public class AutonomusBlue extends LinearOpMode {
         }
 
         // Stop and reset
-        flmotor.setPower(0);
-        frmotor.setPower(0);
-        blmotor.setPower(0);
-        brmotor.setPower(0);
-
-        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        sleep(250);
+        stopAndResetDrive();
     }
 
     private void moveForward(double inches, double speed) {
@@ -114,13 +112,10 @@ public class AutonomusBlue extends LinearOpMode {
 
         setDriveMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        flmotor.setPower(speed);
-        frmotor.setPower(speed);
-        blmotor.setPower(speed);
-        brmotor.setPower(speed);
+        setDrivePower(speed);
 
         while (opModeIsActive() && flmotor.isBusy() && frmotor.isBusy() && blmotor.isBusy() && brmotor.isBusy()) {
-            telemetry.addData("Path", "Moving forward %d inches", inches);
+            telemetry.addData("Path", "Moving forward %f inches", inches);
             telemetry.addData("Target", "Running to %d", target);
             telemetry.addData("Current Position", "fl:%d fr:%d bl:%d br:%d",
                     flmotor.getCurrentPosition(),
@@ -131,13 +126,7 @@ public class AutonomusBlue extends LinearOpMode {
         }
 
         // Stop all motion
-        flmotor.setPower(0);
-        frmotor.setPower(0);
-        blmotor.setPower(0);
-        brmotor.setPower(0);
-
-        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        sleep(250); // Pause for stability
+        stopAndResetDrive();
     }
 
     private void shoot() {
@@ -145,8 +134,8 @@ public class AutonomusBlue extends LinearOpMode {
         telemetry.update();
 
         // Spin up the shooter wheels to the desired power
-        leftShooterWheel.setPower(SHOOTER_POWER);
-        rightShooterWheel.setPower(SHOOTER_POWER);
+        shooter1.setPower(SHOOTER_POWER);
+        shooter2.setPower(SHOOTER_POWER);
 
         sleep(1500); // Wait for wheels to reach full speed
 
@@ -157,8 +146,8 @@ public class AutonomusBlue extends LinearOpMode {
         sleep(1000); // Time to "shoot"
 
         // Stop the shooter wheels
-        leftShooterWheel.setPower(0);
-        rightShooterWheel.setPower(0);
+        shooter1.setPower(0);
+        shooter2.setPower(0);
         telemetry.addData("Status", "Shooting complete");
         telemetry.update();
     }
@@ -169,5 +158,17 @@ public class AutonomusBlue extends LinearOpMode {
         blmotor.setMode(mode);
         brmotor.setMode(mode);
     }
-}
 
+    private void setDrivePower(double power) {
+        flmotor.setPower(power);
+        frmotor.setPower(power);
+        blmotor.setPower(power);
+        brmotor.setPower(power);
+    }
+
+    private void stopAndResetDrive() {
+        setDrivePower(0);
+        setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250); // Pause for stability
+    }
+}
