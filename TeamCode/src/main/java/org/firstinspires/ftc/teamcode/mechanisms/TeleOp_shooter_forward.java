@@ -12,49 +12,51 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
 
-@TeleOp(name = "TeleOp: Mecanum (Robot-Relative Shooter forward)_3")
+@TeleOp(name = "TeleOp: Mecanum (Robot-Relative intake forward)_3")
 public class TeleOp_shooter_forward extends LinearOpMode {
 
     // --- Drive & Mechanism Declarations ---
-    private DcMotor flmotor, frmotor, blmotor, brmotor;
-    private DcMotorEx shooter_1, shooter_2, intakeTransfer;
-    private Servo intakeServo;
-    private IMU imu;
 
-    // --- State variables ---
-    private boolean shooterOn = false;
-    private boolean bWasPressed = false;
+        private DcMotor flmotor, frmotor, blmotor, brmotor;
+        private DcMotorEx shooter_1, /*shooter_2,*/ intakeTransfer;
+        private Servo intakeServo;
+        private IMU imu;
 
-    private boolean yWasPressed = false;
-    private boolean intakeOn = false;
+        // --- State variables ---
+        private boolean shooterOn = false;
+        private boolean bWasPressed = false;
 
-    private boolean servoUp = false;
-    private boolean xWasPressed = false;
+        private boolean yWasPressed = false;
+        private boolean intakeOn = false;
 
-    // --- Shooter speed control ---
-    private static final double SHOOTER_TARGET_RPM = 5400;
-    private boolean shooterReady = false;
+        private boolean servoUp = false;
+        private boolean xWasPressed = false;
 
-    // --- Reversal detection ---
-    private double lastForward = 0;
-    private double lastRight = 0;
-    private long lastDirectionChangeTime = 0;
-    private static final long REVERSAL_DELAY_MS = 120;
+        // --- Shooter speed control ---
+        private static final double SHOOTER_TARGET_RPM = 5400;
+        private boolean shooterReady = false;
 
-    // --- Slew rate limiting ---
-    private double limitedForward = 0;
-    private double limitedRight = 0;
-    private double limitedRotate = 0;
+        // --- Reversal detection ---
+        private double lastForward = 0;
+        private double lastRight = 0;
+        private long lastDirectionChangeTime = 0;
+        private static final long REVERSAL_DELAY_MS = 120;
 
-    private static final double MAX_ACCEL = 0.08;
-    private static final double MAX_DECEL = 0.12;
+        // --- Slew rate limiting ---
+        private double limitedForward = 0;
+        private double limitedRight = 0;
+        private double limitedRotate = 0;
+
+        private static final double MAX_ACCEL = 0.08;
+        private static final double MAX_DECEL = 0.12;
+
 
     @Override
     public void runOpMode() throws InterruptedException {
         initializeHardware();
         telemetry.update();
         waitForStart();
-        intakeServo.setPosition(0.8);
+        intakeServo.setPosition(0.2);
 
         while (opModeIsActive()) {
             handleDrive();
@@ -66,7 +68,7 @@ public class TeleOp_shooter_forward extends LinearOpMode {
     /** Initialize motors, servo, and IMU */
     private void initializeHardware() {
         shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
-        shooter_2 = hardwareMap.get(DcMotorEx.class, "shooter_2");
+        /*shooter_2 = hardwareMap.get(DcMotorEx.class, "shooter_2");*/
 
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
@@ -83,7 +85,7 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
-        shooter_2.setDirection(DcMotorSimple.Direction.REVERSE);
+        /* shooter_2.setDirection(DcMotorSimple.Direction.REVERSE);*/
 
         intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -94,12 +96,12 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooter_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        /* shooter_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // PIDF (recommended starting values for shooter)
+        // Shooter PIDF (recommended starting values)
         shooter_1.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);
-        shooter_2.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);
+        /*shooter_2.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);*/
 
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -115,12 +117,13 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         telemetry.addLine("\n--- Drive Controls ---");
         telemetry.addLine("Mode: Robot-Relative");
 
-        double forward = gamepad1.left_stick_y;
+        double forward = gamepad1.left_stick_y; // Shooter side is forward
         double right = -gamepad1.left_stick_x;
         double rotate = gamepad1.right_stick_x;
 
         long now = System.currentTimeMillis();
 
+        // Detect movement reversals
         boolean forwardReversal =
                 (Math.signum(forward) == -Math.signum(lastForward)) &&
                         Math.abs(forward) > 0.3 &&
@@ -134,11 +137,13 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         if (forwardReversal || strafeReversal)
             lastDirectionChangeTime = now;
 
+        // Apply reversal pause
         if (now - lastDirectionChangeTime < REVERSAL_DELAY_MS) {
             forward = 0;
             right = 0;
         }
 
+        // Apply slew rate limiter
         limitedForward = applySlewRate(limitedForward, forward);
         limitedRight = applySlewRate(limitedRight, right);
         limitedRotate = applySlewRate(limitedRotate, rotate);
@@ -149,6 +154,7 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         drive(limitedForward, limitedRight, limitedRotate);
     }
 
+    /** Slew rate limiter */
     private double applySlewRate(double current, double target) {
         double delta = target - current;
 
@@ -158,6 +164,7 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         return current + delta;
     }
 
+    /** Standard robot-relative mecanum drive */
     private void drive(double forward, double right, double rotate) {
         double fl = forward + right + rotate;
         double fr = forward - right - rotate;
@@ -175,39 +182,40 @@ public class TeleOp_shooter_forward extends LinearOpMode {
         brmotor.setPower(br / maxPower);
     }
 
+    /** RPM calculation */
     private double getRpm(DcMotorEx motor) {
         return (motor.getVelocity() * 60) / TICKS_PER_REVOLUTION;
     }
 
-    /** PIDF Shooter + Intake + Servo */
+    /** Mechanism controls: shooter, intake, servo */
     private void handleMechanisms() {
 
-        // Intake toggle
+        // Intake toggle (X)
         if (gamepad1.x && !xWasPressed) intakeOn = !intakeOn;
         xWasPressed = gamepad1.x;
 
-        // Shooter toggle
+        // Shooter toggle (B)
         if (gamepad1.b && !bWasPressed) shooterOn = !shooterOn;
         bWasPressed = gamepad1.b;
 
-        // Servo toggle
+        // Blocker servo toggle (Y)
         if (gamepad1.y && !yWasPressed) servoUp = !servoUp;
         yWasPressed = gamepad1.y;
 
         intakeServo.setPosition(servoUp ? 0.8 : 0.38);
 
-        // Convert RPM → ticks/sec
+        // Shooter target in ticks/sec
         double targetVelocity = (SHOOTER_TARGET_RPM / 60.0) * TICKS_PER_REVOLUTION;
 
         if (shooterOn) {
-            // PIDF velocity control
+            // PIDF shooter control
             shooter_1.setVelocity(targetVelocity);
-            shooter_2.setVelocity(targetVelocity);
+            /*shooter_2.setVelocity(targetVelocity);*/
 
-            // Current RPM
+            // Actual RPM
             double rpm1 = getRpm(shooter_1);
-            double rpm2 = getRpm(shooter_2);
-            double avgRpm = (rpm1 + rpm2) / 2.0;
+            /*double rpm2 = getRpm(shooter_2);*/
+            double avgRpm = (rpm1 /* + rpm2*/) / 1.0;
 
             shooterReady = Math.abs(avgRpm - SHOOTER_TARGET_RPM) < 75;
 
@@ -215,7 +223,7 @@ public class TeleOp_shooter_forward extends LinearOpMode {
             telemetry.addData("Shooter Ready", shooterReady);
         } else {
             shooter_1.setPower(0);
-            shooter_2.setPower(0);
+            /*shooter_2.setPower(0);*/
             shooterReady = false;
         }
 

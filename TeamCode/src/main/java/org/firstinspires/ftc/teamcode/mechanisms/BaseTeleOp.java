@@ -1,4 +1,3 @@
-/* Copyright (c) 2025 FIRST */
 package org.firstinspires.ftc.teamcode.mechanisms;
 
 import static org.firstinspires.ftc.teamcode.mechanisms.TestBench.TICKS_PER_REVOLUTION;
@@ -6,23 +5,23 @@ import static org.firstinspires.ftc.teamcode.mechanisms.TestBench.TICKS_PER_REVO
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
 
-@TeleOp(name = "TeleOp: Mecanum (Robot-Relative intake forward)_3")
-public class TeleOp_intake_forward extends LinearOpMode {
+public abstract class BaseTeleOp extends LinearOpMode {
 
-    // --- Drive & Mechanism Declarations ---
+    protected DcMotor flmotor, frmotor, blmotor, brmotor;
+    protected DcMotorEx shooter_1, intakeTransfer;
+    protected CRServo intakeServo;
+    protected double limitedForward = 0, limitedRight = 0, limitedRotate = 0;
 
-    private DcMotor flmotor, frmotor, blmotor, brmotor;
-    private DcMotorEx shooter_1, /*shooter_2,*/ intakeTransfer;
-    private Servo intakeServo;
     private IMU imu;
 
-    // --- State variables ---
+    protected static final double MAX_ACCEL = 0.08, MAX_DECEL = 0.12;
+
     private boolean shooterOn = false;
     private boolean bWasPressed = false;
 
@@ -33,7 +32,7 @@ public class TeleOp_intake_forward extends LinearOpMode {
     private boolean xWasPressed = false;
 
     // --- Shooter speed control ---
-    private static final double SHOOTER_TARGET_RPM = 5400;
+    private static final double SHOOTER_TARGET_RPM = 4800;
     private boolean shooterReady = false;
 
     // --- Reversal detection ---
@@ -42,31 +41,8 @@ public class TeleOp_intake_forward extends LinearOpMode {
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
 
-    // --- Slew rate limiting ---
-    private double limitedForward = 0;
-    private double limitedRight = 0;
-    private double limitedRotate = 0;
 
-    private static final double MAX_ACCEL = 0.08;
-    private static final double MAX_DECEL = 0.12;
-
-
-    @Override
-    public void runOpMode() throws InterruptedException {
-        initializeHardware();
-        telemetry.update();
-        waitForStart();
-        intakeServo.setPosition(0.2);
-
-        while (opModeIsActive()) {
-            handleDrive();
-            handleMechanisms();
-            telemetry.update();
-        }
-    }
-
-    /** Initialize motors, servo, and IMU */
-    private void initializeHardware() {
+    public void initializeHardware() {
         shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
         /*shooter_2 = hardwareMap.get(DcMotorEx.class, "shooter_2");*/
 
@@ -76,7 +52,7 @@ public class TeleOp_intake_forward extends LinearOpMode {
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
 
         intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
-        intakeServo = hardwareMap.get(Servo.class, "intakeServo");
+        intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
 
         // Motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -84,7 +60,7 @@ public class TeleOp_intake_forward extends LinearOpMode {
         frmotor.setDirection(DcMotor.Direction.FORWARD);
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
-        shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
+        shooter_1.setDirection(DcMotorSimple.Direction.REVERSE);
         /* shooter_2.setDirection(DcMotorSimple.Direction.REVERSE);*/
 
         intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -100,9 +76,10 @@ public class TeleOp_intake_forward extends LinearOpMode {
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Shooter PIDF (recommended starting values)
-        shooter_1.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);
+        shooter_1.setVelocityPIDFCoefficients(0.14, 0.0, 0.0, 11.7);
         /*shooter_2.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);*/
-
+        intakeServo.setPower(0.0);
+        intakeServo.setDirection(DcMotorSimple.Direction.FORWARD);
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -112,13 +89,38 @@ public class TeleOp_intake_forward extends LinearOpMode {
         telemetry.addLine("Hardware initialized");
     }
 
-    /** Handles driving + reversal protection + slew rate limiting */
-    private void handleDrive() {
+    protected double applySlewRate(double current, double target) {
+        double delta = target - current;
+        if (delta > 0) delta = Math.min(delta, MAX_ACCEL);
+        else           delta = Math.max(delta, -MAX_DECEL);
+        return current + delta;
+    }
+
+    private void drive(double forward, double right, double rotate) {
+        double fl = forward + right + rotate;
+        double fr = forward - right - rotate;
+        double bl = forward - right + rotate;
+        double br = forward + right - rotate;
+
+        double maxPower = Math.max(1.0, Math.max(
+                Math.max(Math.abs(fl), Math.abs(fr)),
+                Math.max(Math.abs(bl), Math.abs(br))
+        ));
+
+        flmotor.setPower(fl / maxPower);
+        frmotor.setPower(fr / maxPower);
+        blmotor.setPower(bl / maxPower);
+        brmotor.setPower(br / maxPower);
+    }
+
+    // --- Slew rate limiting ---
+
+    protected void handleDrive(double forward, double right) {
         telemetry.addLine("\n--- Drive Controls ---");
         telemetry.addLine("Mode: Robot-Relative");
 
-        double forward = -gamepad1.left_stick_y; // Shooter side is forward
-        double right = gamepad1.left_stick_x;
+        //double forward = gamepad1.left_stick_y; // Shooter side is forward
+        //double right = -gamepad1.left_stick_x;
         double rotate = gamepad1.right_stick_x;
 
         long now = System.currentTimeMillis();
@@ -154,83 +156,58 @@ public class TeleOp_intake_forward extends LinearOpMode {
         drive(limitedForward, limitedRight, limitedRotate);
     }
 
-    /** Slew rate limiter */
-    private double applySlewRate(double current, double target) {
-        double delta = target - current;
-
-        if (delta > 0) delta = Math.min(delta, MAX_ACCEL);
-        else           delta = Math.max(delta, -MAX_DECEL);
-
-        return current + delta;
-    }
-
-    /** Standard robot-relative mecanum drive */
-    private void drive(double forward, double right, double rotate) {
-        double fl = forward + right + rotate;
-        double fr = forward - right - rotate;
-        double bl = forward - right + rotate;
-        double br = forward + right - rotate;
-
-        double maxPower = Math.max(1.0, Math.max(
-                Math.max(Math.abs(fl), Math.abs(fr)),
-                Math.max(Math.abs(bl), Math.abs(br))
-        ));
-
-        flmotor.setPower(fl / maxPower);
-        frmotor.setPower(fr / maxPower);
-        blmotor.setPower(bl / maxPower);
-        brmotor.setPower(br / maxPower);
-    }
-
-    /** RPM calculation */
     private double getRpm(DcMotorEx motor) {
         return (motor.getVelocity() * 60) / TICKS_PER_REVOLUTION;
     }
 
-    /** Mechanism controls: shooter, intake, servo */
-    private void handleMechanisms() {
+    protected void handleMechanisms() {
 
-        // Intake toggle (X)
-        if (gamepad1.x && !xWasPressed) intakeOn = !intakeOn;
+        // --- Intake toggle (X button) ---
+        if (gamepad1.x && !xWasPressed) {
+            intakeOn = !intakeOn; // Toggle intake
+        }
         xWasPressed = gamepad1.x;
 
-        // Shooter toggle (B)
-        if (gamepad1.b && !bWasPressed) shooterOn = !shooterOn;
+        // --- Shooter toggle (B button) ---
+        if (gamepad1.b && !bWasPressed) {
+            shooterOn = !shooterOn; // Toggle shooter
+        }
         bWasPressed = gamepad1.b;
 
-        // Blocker servo toggle (Y)
-        if (gamepad1.y && !yWasPressed) servoUp = !servoUp;
+        // --- Blocker/servo toggle (Y button) ---
+        if (gamepad1.y && !yWasPressed) {
+            servoUp = !servoUp; // Toggle servo ON/OFF
+        }
         yWasPressed = gamepad1.y;
 
-        intakeServo.setPosition(servoUp ? 0.8 : 0.38);
+        // --- Set CRServo power (ON/OFF) ---
+        intakeServo.setPower(servoUp ? 1.0 : 0.0);
 
-        // Shooter target in ticks/sec
-        double targetVelocity = (SHOOTER_TARGET_RPM / 60.0) * TICKS_PER_REVOLUTION;
+        // --- Shooter control ---
+        // --- Shooter control ---
+        double targetVelocity =
+                (SHOOTER_TARGET_RPM / 60.0) * TICKS_PER_REVOLUTION;
 
         if (shooterOn) {
-            // PIDF shooter control
             shooter_1.setVelocity(targetVelocity);
-            /*shooter_2.setVelocity(targetVelocity);*/
 
-            // Actual RPM
-            double rpm1 = getRpm(shooter_1);
-            /*double rpm2 = getRpm(shooter_2);*/
-            double avgRpm = (rpm1 /* + rpm2*/) / 1.0;
+            double rpm = getRpm(shooter_1);
+            shooterReady = Math.abs(rpm - SHOOTER_TARGET_RPM) < 75;
 
-            shooterReady = Math.abs(avgRpm - SHOOTER_TARGET_RPM) < 75;
-
-            telemetry.addData("Shooter RPM Avg", avgRpm);
+            telemetry.addData("Shooter RPM", rpm);
             telemetry.addData("Shooter Ready", shooterReady);
         } else {
-            shooter_1.setPower(0);
-            /*shooter_2.setPower(0);*/
+            shooter_1.setVelocity(0);
             shooterReady = false;
         }
 
-        // Intake
-        if (intakeOn) intakeTransfer.setPower(1.0);
-        else          intakeTransfer.setPower(0.0);
+        // --- Intake motor control ---
+        intakeTransfer.setPower(intakeOn ? 1.0 : 0.0);
 
-        telemetry.addLine(servoUp ? "Gate: UP" : "Gate: DOWN");
+        // --- Telemetry ---
+        telemetry.addLine(servoUp ? "Gate: ON" : "Gate: OFF");
+        telemetry.addLine(intakeOn ? "Intake: ON" : "Intake: OFF");
+        telemetry.addLine(shooterOn ? "Shooter: ON" : "Shooter: OFF");
     }
+
 }

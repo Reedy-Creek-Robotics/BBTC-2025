@@ -3,16 +3,17 @@ package org.firstinspires.ftc.teamcode.Autonomus;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous(name = "Autonomous 1: Move and Shoot (Updated Logic blue)")
-public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
+@Autonomous(name = "Autonomous motor testing")
+public class Autonomus extends LinearOpMode {
 
     // Drive motors
     private DcMotor flmotor, frmotor, blmotor, brmotor;
 
     // Shooter motors (same as TeleOp)
-    private DcMotor shooter_1;/*, shooter_2;*/
+    private DcMotor shooter_1 ;/*, shooter_2;*/
 
     // Intake + transfer motors (same as TeleOp)
     private DcMotor intakeTransfer;
@@ -53,34 +54,12 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
         // -------------------------------
 
         // 1) Move forward 50 inches while intake is ON
-        activateIntake(false);
-
-        moveForward(63, DRIVE_SPEED);
-
-
-
-        // 3) Spin up shooter and fire
-
-        /*intakeServo.setPosition(0.8);
-        shooter_1.setPower(0.5);
-        shooter_2.setPower(0.5);
-        sleep(3000);
-        intakeTransfer.setPower(1);
-        intakeServo.setPosition(0.38);
-        sleep(10000);*/
-
-
-
-        rotate(90, TURN_SPEED);
-
-
-
-        moveForward(35,DRIVE_SPEED);
-
-
-
-        // End
-        stopAll();
+       intakeTransfer.setPower(1);
+       sleep(5000);
+       shooter_1.setPower(0.5);
+       sleep(5000);
+       intakeTransfer.setPower(0);
+       shooter_1.setPower(0);
     }
 
     // ============================================================
@@ -94,7 +73,7 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
 
         shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
-       // shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
+        // shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
 
         intakeTransfer = hardwareMap.get(DcMotor.class, "intakeTransfer");
 
@@ -107,19 +86,20 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
         shooter_1.setDirection(DcMotor.Direction.FORWARD);
-        //shooter_2.setDirection(DcMotor.Direction.REVERSE);
-        intakeTransfer.setDirection(DcMotor.Direction.FORWARD);
+        // shooter_2.setDirection(DcMotor.Direction.REVERSE);
+        intakeTransfer.setDirection(DcMotor.Direction.REVERSE);
 
         flmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         blmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         brmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         // Drive encoders
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-       // shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Default servo position: OPEN
@@ -147,7 +127,7 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
                 //shooter_2.setPower(SHOOTER_HALF_POWER);
             } else {
                 shooter_1.setPower(SHOOTER_FULL_POWER);
-              //  shooter_2.setPower(SHOOTER_FULL_POWER);
+                // shooter_2.setPower(SHOOTER_FULL_POWER);
             }
 
             intakeTransfer.setPower(TRANSFER_POWER);
@@ -155,7 +135,7 @@ public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
         }
         else {
             shooter_1.setPower(0);
-           // shooter_2.setPower(0);
+            // shooter_2.setPower(0);
             intakeTransfer.setPower(0);
             intakeServo.setPosition(1.0); // open when idle
         }
