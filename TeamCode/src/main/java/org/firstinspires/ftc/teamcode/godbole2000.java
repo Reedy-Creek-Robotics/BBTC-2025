@@ -1,0 +1,51 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+@TeleOp(name = "MecanumTeleOp", group = "Robot")
+public class MecanumTeleOp extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+
+        // Declare motors (names must match the Robot Configuration)
+        DcMotor frontLeftMotor  = hardwareMap.dcMotor.get("flmotor");
+        DcMotor backLeftMotor   = hardwareMap.dcMotor.get("blmotor");
+        DcMotor frontRightMotor = hardwareMap.dcMotor.get("frmotor");
+        DcMotor backRightMotor  = hardwareMap.dcMotor.get("brmotor");
+
+        // Reverse right side motors
+        frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+
+            // Gamepad inputs
+            double y  = -gamepad1.left_stick_y;   // Forward/back
+            double x  =  gamepad1.left_stick_x * 1.1; // Strafe (adjusted)
+            double rx =  gamepad1.right_stick_x;  // Rotation
+
+            // Normalize motor powers
+            double denominator = Math.max(
+                    Math.abs(y) + Math.abs(x) + Math.abs(rx),
+                    1.0
+            );
+
+            double frontLeftPower  = (y + x + rx) / denominator;
+            double backLeftPower   = (y - x + rx) / denominator;
+            double frontRightPower = (y - x - rx) / denominator;
+            double backRightPower  = (y + x - rx) / denominator;
+
+            // Set motor powers
+            frontLeftMotor.setPower(frontLeftPower);
+            backLeftMotor.setPower(backLeftPower);
+            frontRightMotor.setPower(frontRightPower);
+            backRightMotor.setPower(backRightPower);
+        }
+    }
+}
