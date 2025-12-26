@@ -12,7 +12,7 @@ public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
     private DcMotor flmotor, frmotor, blmotor, brmotor;
 
     // Shooter motors (same as TeleOp)
-    private DcMotor shooter_1, shooter_2;
+    private DcMotor shooter_1;//, shooter_2;
 
     // Intake + transfer motors (same as TeleOp)
     private DcMotor intakeTransfer;
@@ -88,7 +88,7 @@ public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
 
         shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
-        shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
+       // shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
 
         intakeTransfer = hardwareMap.get(DcMotor.class, "intakeTransfer");
 
@@ -101,7 +101,7 @@ public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
         shooter_1.setDirection(DcMotor.Direction.FORWARD);
-        shooter_2.setDirection(DcMotor.Direction.REVERSE);
+        //shooter_2.setDirection(DcMotor.Direction.REVERSE);
         intakeTransfer.setDirection(DcMotor.Direction.FORWARD);
 
         flmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -114,7 +114,7 @@ public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+      //  shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Default servo position: OPEN
@@ -139,10 +139,10 @@ public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
         if (on) {
             if (halfPower) {
                 shooter_1.setPower(SHOOTER_HALF_POWER);
-                shooter_2.setPower(SHOOTER_HALF_POWER);
+            //    shooter_2.setPower(SHOOTER_HALF_POWER);
             } else {
                 shooter_1.setPower(SHOOTER_FULL_POWER);
-                shooter_2.setPower(SHOOTER_FULL_POWER);
+             //   shooter_2.setPower(SHOOTER_FULL_POWER);
             }
 
             intakeTransfer.setPower(TRANSFER_POWER);
@@ -150,7 +150,7 @@ public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
         }
         else {
             shooter_1.setPower(0);
-            shooter_2.setPower(0);
+         //   shooter_2.setPower(0);
             intakeTransfer.setPower(0);
             intakeServo.setPosition(1.0); // open when idle
         }
@@ -237,7 +237,7 @@ public class AutonomusStraightRedToUseAtScrimage extends LinearOpMode {
     private void stopAll() {
         intakeTransfer.setPower(0);
         shooter_1.setPower(0);
-        shooter_2.setPower(0);
+     //   shooter_2.setPower(0);
         intakeServo.setPosition(0.8);
         stopDrive();
     }
