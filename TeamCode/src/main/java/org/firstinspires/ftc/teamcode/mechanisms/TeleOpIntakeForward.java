@@ -9,12 +9,12 @@ public class TeleOpIntakeForward extends BaseTeleOp {
         initializeHardware(); // Calling the function from the Brain
         telemetry.update();
         waitForStart();
-        intakeServo.setPosition(0.2);
 
         while (opModeIsActive()) {
             handleDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x);
             handleMechanisms();
             telemetry.update();
+            camera.update();
         }
     }
 }

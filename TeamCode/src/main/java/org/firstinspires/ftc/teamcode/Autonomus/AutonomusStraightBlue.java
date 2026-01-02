@@ -5,9 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous(name = "Autonomous 1: Move Straight  ( Blue)")
+@Autonomous(name = "Autonomous : Straight (Blue)")
 
-public class AutonomusStraightBlueToUseAtScimage extends LinearOpMode {
+public class AutonomusStraightBlue extends LinearOpMode {
 
     // Drive motors
     private DcMotor flmotor, frmotor, blmotor, brmotor;
