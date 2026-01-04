@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.mechanisms;
 
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -22,37 +21,29 @@ public abstract class BaseTeleOp extends LinearOpMode {
     protected static final double MAX_ACCEL = 0.08, MAX_DECEL = 0.12;
 
     private boolean shooterOn = false;
+    private boolean lastShooterOn = false;
     private boolean bWasPressed = false;
 
     private boolean intakeOn = false;
+    private boolean xWasPressed = false;
 
     private boolean servoOn = false;
-    private boolean cameraOn = false;
-    private boolean yWasPressed = false;
+    //private boolean cameraOn = false;
+//    private boolean yWasPressed = false;
+
+//    private boolean lastYWasPressed = false;
 
     private boolean aWasPressed = false;
-    private boolean xWasPressed = false;
-    //private boolean currentRightBumper = false;
-    //private boolean lastRightBumper = false;
 
     private boolean servoAllowed = false;
 
-    private double shootervelocity = 1000;
+    private double shootervelocity = 1900;
 
-    // --- Shooter speed control ---
-
-    // --- Servo RPM gating ---
-
-    // --- Reversal detection ---
     private double lastForward = 0;
     private double lastRight = 0;
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
-    private static final double SERVO_START_TICKS = 850;
-
-
-
-
+    private static final double SERVO_START_TICKS = 1050;
 
     public void initializeHardware() {
 
@@ -76,7 +67,6 @@ public abstract class BaseTeleOp extends LinearOpMode {
         intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
-
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         blmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -85,14 +75,13 @@ public abstract class BaseTeleOp extends LinearOpMode {
         shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
         intakeServo.setPower(0.0);
-        intakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
+
         shooter_1.setVelocityPIDFCoefficients(0.8, 0.0, 0.0, 15.0);
 
         telemetry.addLine("Hardware initialized");
@@ -101,7 +90,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
     protected double applySlewRate(double current, double target) {
         double delta = target - current;
         if (delta > 0) delta = Math.min(delta, MAX_ACCEL);
-        else           delta = Math.max(delta, -MAX_DECEL);
+        else delta = Math.max(delta, -MAX_DECEL);
         return current + delta;
     }
 
@@ -145,8 +134,8 @@ public abstract class BaseTeleOp extends LinearOpMode {
         }
 
         limitedForward = applySlewRate(limitedForward, forward);
-        limitedRight   = applySlewRate(limitedRight, right);
-        limitedRotate  = applySlewRate(limitedRotate, rotate);
+        limitedRight = applySlewRate(limitedRight, right);
+        limitedRotate = applySlewRate(limitedRotate, rotate);
 
         lastForward = forward;
         lastRight = right;
@@ -154,7 +143,6 @@ public abstract class BaseTeleOp extends LinearOpMode {
         drive(limitedForward, limitedRight, limitedRotate);
     }
 
-//This converts the ticks per second to rpm and then checks the threshold.
     protected void handleMechanisms() {
 
         // --- Intake toggle (X button) ---
@@ -163,10 +151,11 @@ public abstract class BaseTeleOp extends LinearOpMode {
         }
         xWasPressed = gamepad1.x;
 
-        if(gamepad1.y && !yWasPressed){
+        // --- Camera toggle (Y button) ---
+       /* if (gamepad1.y && !yWasPressed) {
             cameraOn = !cameraOn;
         }
-        yWasPressed = gamepad1.y;
+        yWasPressed = gamepad1.y;*/
 
         // --- Shooter toggle (B button) ---
         if (gamepad1.b && !bWasPressed) {
@@ -174,77 +163,69 @@ public abstract class BaseTeleOp extends LinearOpMode {
         }
         bWasPressed = gamepad1.b;
 
-        double tps = 0;
-        double rpm = 0;
-
         if(servoOn){
             intakeServo.setPower(1);
             servoAllowed = false;
         } else {
             intakeServo.setPower(0);
         }
+
+        double tps = 0;
+        double rpm = 0;
+
         if (shooterOn) {
-            // Optional: adjust PIDF for faster spin-up
-            /*if (currentRightBumper && !lastRightBumper) {
+            /*if (yWasPressed && !lastYWasPressed) {
                 shootervelocity += 100;
             }
-            currentRightBumper = gamepad1.right_bumper;
-            lastRightBumper = currentRightBumper;*/
-
+            yWasPressed = gamepad1.y;
+            lastYWasPressed = yWasPressed;*/
             shooter_1.setVelocity(shootervelocity);
 
-            if(gamepad1.a && !aWasPressed) {
+            if (gamepad1.a && !aWasPressed) {
                 servoOn = !servoOn;
             }
             aWasPressed = gamepad1.a;
 
-            // --- Convert ticks/sec → RPM ---
             tps = shooter_1.getVelocity();
             rpm = (tps * 60) / 28;
-
-
-            // --- Servo gating with hysteresis ---
-            if (!servoAllowed && (tps  > SERVO_START_TICKS || aWasPressed)){
+            //rpm reached or manual override
+            if (!servoAllowed && tps > SERVO_START_TICKS || aWasPressed) {
                 servoAllowed = true;
             } else if (servoAllowed && tps < SERVO_START_TICKS) {
                 servoAllowed = false;
             }
-
         } else {
             shooter_1.setVelocity(0);
             servoOn = false;
             servoAllowed = false;
             aWasPressed = false;
+            // FORCE intake OFF when shooter turns OFF
+            if (lastShooterOn) {
+                intakeOn = false;
+            }
         }
-        if(cameraOn){
+        lastShooterOn = shooterOn;
+
+      /*  if (cameraOn) {
             camera.enable();
         } else {
             camera.disable();
-        }
+        }*/
 
-        //double tx = camera.getTx();
-        //double ta = camera.getTa();690
-        double distance = camera.getDistance();
-        //double ty = camera.getTy();
-        double tagid = camera.getTid();
-        // --- CRServo only runs if shooter is ready ---
+//        double distance = camera.getDistance();
+//        double tagid = camera.getTid();
+
         intakeServo.setPower(servoAllowed ? 1.0 : 0.0);
-
-        // --- Intake motor ---
         intakeTransfer.setPower(intakeOn ? 1.0 : 0.0);
 
-        // --- Telemetry for debugging ---
         telemetry.addData("Shooter ON", shooterOn ? "YES" : "NO");
-        telemetry.addData("Raw tickfts/sec", tps);
-        telemetry.addData("rpm is:",rpm);
+        telemetry.addData("Raw ticks/sec", tps);
+        telemetry.addData("RPM", rpm);
         telemetry.addData("Intake ON", intakeOn ? "YES" : "NO");
-        telemetry.addData("servo Allowed",servoAllowed ? "YES" : "NO");
-        telemetry.addData("distance is: ",distance);
-        telemetry.addData("tag ID is: ",tagid);
+        telemetry.addData("Servo Allowed", servoAllowed ? "YES" : "NO");
+//        telemetry.addData("Distance", distance);
+//        telemetry.addData("Tag ID", tagid);
 
         telemetry.update();
     }
-
-
-
 }
