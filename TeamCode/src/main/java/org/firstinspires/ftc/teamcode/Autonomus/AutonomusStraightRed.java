@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -18,7 +19,7 @@ public class AutonomusStraightRed extends LinearOpMode {
     private DcMotor intakeTransfer;
 
     // Servo (same name as TeleOp)
-    private Servo intakeServo;
+    private CRServo intakeServo;
 
     // Constants
     private static final double COUNTS_PER_MOTOR_REV = 537.7;
@@ -92,7 +93,7 @@ public class AutonomusStraightRed extends LinearOpMode {
 
         intakeTransfer = hardwareMap.get(DcMotor.class, "intakeTransfer");
 
-        intakeServo = hardwareMap.get(Servo.class, "intakeServo");
+        intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
 
         // Directions (same as TeleOp)
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -118,7 +119,7 @@ public class AutonomusStraightRed extends LinearOpMode {
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Default servo position: OPEN
-        intakeServo.setPosition(1.0);
+        intakeServo.setPower(0.0);
     }
 
     // ============================================================
@@ -127,7 +128,6 @@ public class AutonomusStraightRed extends LinearOpMode {
     private void activateIntake(boolean on) {
         if (on) {
             intakeTransfer.setPower(TRANSFER_POWER);
-            intakeServo.setPosition(0.4);  // servo OPEN for intake
         }
     }
 
@@ -146,13 +146,13 @@ public class AutonomusStraightRed extends LinearOpMode {
             }
 
             intakeTransfer.setPower(TRANSFER_POWER);
-            intakeServo.setPosition(0.0); // servo CLOSED for shooting
+            intakeServo.setPower(1.0); // servo CLOSED for shooting
         }
         else {
             shooter_1.setPower(0);
          //   shooter_2.setPower(0);
             intakeTransfer.setPower(0);
-            intakeServo.setPosition(1.0); // open when idle
+            intakeServo.setPower(0.0); // open when idle
         }
     }
 
@@ -167,7 +167,6 @@ public class AutonomusStraightRed extends LinearOpMode {
 
         // 2) Feed for 1 second
         intakeTransfer.setPower(TRANSFER_POWER);
-        intakeServo.setPosition(0.8);
 
         sleep(3000);
 
@@ -238,7 +237,7 @@ public class AutonomusStraightRed extends LinearOpMode {
         intakeTransfer.setPower(0);
         shooter_1.setPower(0);
      //   shooter_2.setPower(0);
-        intakeServo.setPosition(0.8);
+        intakeServo.setPower(0.0);
         stopDrive();
     }
 

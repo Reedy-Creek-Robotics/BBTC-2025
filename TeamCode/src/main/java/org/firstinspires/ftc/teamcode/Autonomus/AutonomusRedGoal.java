@@ -2,8 +2,12 @@ package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+//RIGHT ONE
 
 @Autonomous(name = "Autonomous : Red Goal")
 public class AutonomusRedGoal extends LinearOpMode {
@@ -12,18 +16,20 @@ public class AutonomusRedGoal extends LinearOpMode {
     private DcMotor flmotor, frmotor, blmotor, brmotor;
 
     // Shooter motors (same as TeleOp)
-    private DcMotor shooter_1 ;/*, shooter_2;*/
+    private DcMotorEx shooter_1 ;/*, shooter_2;*/
 
     // Intake + transfer motors (same as TeleOp)
     private DcMotor intakeTransfer;
 
     // Servo (same name as TeleOp)
-    private Servo intakeServo;
+    private CRServo intakeServo;
 
     // Constants
     private static final double COUNTS_PER_MOTOR_REV = 537.7;
     private static final double DRIVE_GEAR_REDUCTION = 1.0;
     private static final double WHEEL_DIAMETER_INCHES = 4.25;
+
+    private static final double HALF_OF_BOT_LENGTH = 8.5;
     private static final double COUNTS_PER_INCH =
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
@@ -53,7 +59,7 @@ public class AutonomusRedGoal extends LinearOpMode {
         // -------------------------------
 
         // 1) Move forward 50 inches while intake is ON
-        moveForward(63, DRIVE_SPEED);
+        moveForward((46 + HALF_OF_BOT_LENGTH), 0.5);
 
 
 
@@ -68,11 +74,23 @@ public class AutonomusRedGoal extends LinearOpMode {
         sleep(10000);*/
 
 
-        rotate(-90, TURN_SPEED);
+        rotate(-147, TURN_SPEED);
+        sleep(100);
+        intakeTransfer.setPower(1.0);
 
+        moveForward((44),0.23);
+        sleep(200);
+        intakeTransfer.setPower(0.0);
 
-        moveForward(35,DRIVE_SPEED);
-
+        moveForward((-44), DRIVE_SPEED);
+        rotate(147, TURN_SPEED);
+        shooter_1.setVelocity(2100);
+        sleep(5000);
+        moveForward(-16,DRIVE_SPEED);
+        intakeServo.setPower(1.0);
+        sleep(2000);
+        intakeTransfer.setPower(0.8);
+        sleep(8000);
 
 
         // End
@@ -89,12 +107,12 @@ public class AutonomusRedGoal extends LinearOpMode {
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
 
-        shooter_1 = hardwareMap.get(DcMotor.class, "shooter_1");
+        shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
        // shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
 
         intakeTransfer = hardwareMap.get(DcMotor.class, "intakeTransfer");
 
-        intakeServo = hardwareMap.get(Servo.class, "intakeServo");
+        intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
 
         // Directions (same as TeleOp)
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -102,9 +120,9 @@ public class AutonomusRedGoal extends LinearOpMode {
         frmotor.setDirection(DcMotor.Direction.FORWARD);
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
-        shooter_1.setDirection(DcMotor.Direction.FORWARD);
-       // shooter_2.setDirection(DcMotor.Direction.REVERSE);
-        intakeTransfer.setDirection(DcMotor.Direction.FORWARD);
+        shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
+        intakeTransfer.setDirection(DcMotor.Direction.REVERSE);
+        intakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         flmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -115,12 +133,14 @@ public class AutonomusRedGoal extends LinearOpMode {
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        shooter_1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Default servo position: OPEN
-        intakeServo.setPosition(1.0);
+        intakeServo.setPower(0.0);
+        shooter_1.setVelocityPIDFCoefficients(0.8, 0.0, 0.0, 15.0);
+
     }
 
     // ============================================================
@@ -129,7 +149,7 @@ public class AutonomusRedGoal extends LinearOpMode {
     private void activateIntake(boolean on) {
         if (on) {
             intakeTransfer.setPower(TRANSFER_POWER);
-            intakeServo.setPosition(0.4);  // servo OPEN for intake
+            intakeServo.setPower(0.0);  // servo OPEN for intake
         }
     }
 
@@ -148,13 +168,13 @@ public class AutonomusRedGoal extends LinearOpMode {
             }
 
             intakeTransfer.setPower(TRANSFER_POWER);
-            intakeServo.setPosition(0.0); // servo CLOSED for shooting
+            intakeServo.setPower(1.0); // servo CLOSED for shooting
         }
         else {
             shooter_1.setPower(0);
            // shooter_2.setPower(0);
             intakeTransfer.setPower(0);
-            intakeServo.setPosition(1.0); // open when idle
+            intakeServo.setPower(0.0); // open when idle
         }
     }
 
@@ -169,7 +189,6 @@ public class AutonomusRedGoal extends LinearOpMode {
 
         // 2) Feed for 1 second
         intakeTransfer.setPower(TRANSFER_POWER);
-        intakeServo.setPosition(0.8);
 
         sleep(3000);
 
@@ -205,7 +224,7 @@ public class AutonomusRedGoal extends LinearOpMode {
     }
 
     private void rotate(double degrees, double speed) {
-        final double TURN_DIAMETER_INCHES = 15.0;
+        final double TURN_DIAMETER_INCHES = 23.5;
         double inchesToTurn = (degrees / 360.0) * (TURN_DIAMETER_INCHES * Math.PI);
         int target = (int)(inchesToTurn * COUNTS_PER_INCH);
 
@@ -240,7 +259,7 @@ public class AutonomusRedGoal extends LinearOpMode {
         intakeTransfer.setPower(0);
         shooter_1.setPower(0);
         //shooter_2.setPower(0);
-        intakeServo.setPosition(0.8);
+        intakeServo.setPower(0.0);
         stopDrive();
     }
 
