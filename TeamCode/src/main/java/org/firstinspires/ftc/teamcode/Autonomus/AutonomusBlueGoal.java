@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous(name = "Autonomous 1: Move and Shoot (Updated Logic blue)")
-public class AutonomusBluegoalToUseAtScrimage extends LinearOpMode {
+@Autonomous(name = "Autonomous : Blue Goal")
+public class AutonomusBlueGoal extends LinearOpMode {
 
     // Drive motors
     private DcMotor flmotor, frmotor, blmotor, brmotor;
