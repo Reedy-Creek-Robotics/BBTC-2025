@@ -29,21 +29,19 @@ public abstract class BaseTeleOp extends LinearOpMode {
 
     private boolean servoOn = false;
     //private boolean cameraOn = false;
-//    private boolean yWasPressed = false;
+    private boolean yWasPressed = false;
 
-//    private boolean lastYWasPressed = false;
 
-    private boolean aWasPressed = false;
+  //  private boolean aWasPressed = false;
 
     private boolean servoAllowed = false;
 
-    private double shootervelocity = 1900;
 
     private double lastForward = 0;
     private double lastRight = 0;
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
-    private static final double SERVO_START_TICKS = 1050;
+//    private static final double SERVO_START_TICKS = 1050;
 
     public void initializeHardware() {
 
@@ -151,10 +149,10 @@ public abstract class BaseTeleOp extends LinearOpMode {
         xWasPressed = gamepad1.x;
 
         // --- Camera toggle (Y button) ---
-       /* if (gamepad1.y && !yWasPressed) {
+       /* if (gamepad1.a && !aWasPressed) {
             cameraOn = !cameraOn;
         }
-        yWasPressed = gamepad1.y;*/
+        aWasPressed = gamepad1.a;*/
 
         // --- Shooter toggle (B button) ---
         if (gamepad1.b && !bWasPressed) {
@@ -169,35 +167,30 @@ public abstract class BaseTeleOp extends LinearOpMode {
             intakeServo.setPower(0);
         }
 
-        double tps = 0;
-        double rpm = 0;
+    //    double tps = 0;
+    //    double rpm = 0;
 
         if (shooterOn) {
-            /*if (yWasPressed && !lastYWasPressed) {
-                shootervelocity += 100;
-            }
-            yWasPressed = gamepad1.y;
-            lastYWasPressed = yWasPressed;*/
-            shooter_1.setVelocity(shootervelocity);
+            shooter_1.setVelocity(2300);
 
-            if (gamepad1.a && !aWasPressed) {
+            if (gamepad1.y && !yWasPressed) {
                 servoOn = !servoOn;
             }
-            aWasPressed = gamepad1.a;
+            yWasPressed = gamepad1.y;
 
-            tps = shooter_1.getVelocity();
-            rpm = (tps * 60) / 28;
+      //      tps = shooter_1.getVelocity();
+      //      rpm = (tps * 60) / 28;
             //rpm reached or manual override
-            if (!servoAllowed && tps > SERVO_START_TICKS || aWasPressed) {
+           /* if (!servoAllowed && tps > SERVO_START_TICKS || yWasPressed) {
                 servoAllowed = true;
             } else if (servoAllowed && tps < SERVO_START_TICKS) {
                 servoAllowed = false;
-            }
+            }*/
         } else {
             shooter_1.setVelocity(0);
             servoOn = false;
             servoAllowed = false;
-            aWasPressed = false;
+            yWasPressed = false;
             // FORCE intake OFF when shooter turns OFF
             if (lastShooterOn) {
                 intakeOn = false;
@@ -217,11 +210,11 @@ public abstract class BaseTeleOp extends LinearOpMode {
         intakeServo.setPower(servoAllowed ? 1.0 : 0.0);
         intakeTransfer.setPower(intakeOn ? 1.0 : 0.0);
 
-        telemetry.addData("Shooter ON", shooterOn ? "YES" : "NO");
-        telemetry.addData("Raw ticks/sec", tps);
-        telemetry.addData("RPM", rpm);
+//        telemetry.addData("Shooter ON", shooterOn ? "YES" : "NO");
+//        telemetry.addData("Raw ticks/sec", tps);
+//        telemetry.addData("RPM", rpm);
         telemetry.addData("Intake ON", intakeOn ? "YES" : "NO");
-        telemetry.addData("Servo Allowed", servoAllowed ? "YES" : "NO");
+//        telemetry.addData("Servo Allowed", servoAllowed ? "YES" : "NO");
 //        telemetry.addData("Distance", distance);
 //        telemetry.addData("Tag ID", tagid);
 

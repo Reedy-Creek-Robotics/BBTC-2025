@@ -27,7 +27,7 @@ public class AutonomusBlueGoal extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        moveForward(45,0.9);
+        moveForward(45,DRIVE_SPEED);
         shooter_1.setVelocity(2300);
         sleep(2500);
         intakeServo.setPower(1.0);
@@ -37,7 +37,7 @@ public class AutonomusBlueGoal extends BaseAutonomus {
         stopShootSequence();
         sleep(100);
 
-        moveForward(8, 0.9);
+        moveForward(8, 0.6);
         rotate(147, TURN_SPEED);
         sleep(100);
         intakeTransfer.setPower(1.0);
@@ -48,7 +48,7 @@ public class AutonomusBlueGoal extends BaseAutonomus {
 
         moveForward((-44), DRIVE_SPEED);
         rotate(-147, TURN_SPEED);
-        moveForward(-6,DRIVE_SPEED);
+        moveForward(-6,0.6);
         shooter_1.setVelocity(2300);
         sleep(2500);
         intakeServo.setPower(1.0);

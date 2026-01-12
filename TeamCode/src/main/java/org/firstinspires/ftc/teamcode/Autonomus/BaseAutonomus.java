@@ -28,13 +28,10 @@ public abstract class BaseAutonomus extends LinearOpMode {
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
 
-    protected static final double DRIVE_SPEED = 0.5;
+    protected static final double DRIVE_SPEED = 0.9;
     protected static final double TURN_SPEED = 0.4;
 
-    // Shooter & intake powers (same ranges as TeleOp)
-    protected static final double SHOOTER_FULL_POWER = 0.5;
-    protected static final double SHOOTER_HALF_POWER = 0.3;
-    protected static final double TRANSFER_POWER = 0.4;
+
     protected void initializeHardware() {
 
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
@@ -69,65 +66,11 @@ public abstract class BaseAutonomus extends LinearOpMode {
         setDriveMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //shooter_2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Default servo position: OPEN
         intakeServo.setPower(0.0);
         shooter_1.setVelocityPIDFCoefficients(1.5, 0.0, 1.2, 15.0);
-        //shooter_1.setVelocityPIDFCoefficients(5, 0.0, 1.20, 15.0);
-
-
-    }
-
-    protected void activateIntake(boolean on) {
-        if (on) {
-            intakeTransfer.setPower(TRANSFER_POWER);
-            intakeServo.setPower(0.0);  // servo OPEN for intake
-        }
-    }
-
-    // ============================================================
-    // SHOOTER LOGIC (TeleOp Logic)
-    // ============================================================
-    protected void activateShooter(boolean on, boolean halfPower) {
-
-        if (on) {
-            if (halfPower) {
-                shooter_1.setPower(SHOOTER_HALF_POWER);
-                //shooter_2.setPower(SHOOTER_HALF_POWER);
-            } else {
-                shooter_1.setPower(SHOOTER_FULL_POWER);
-                // shooter_2.setPower(SHOOTER_FULL_POWER);
-            }
-
-            intakeTransfer.setPower(TRANSFER_POWER);
-            intakeServo.setPower(1.0); // servo CLOSED for shooting
-        }
-        else {
-            shooter_1.setPower(0);
-            // shooter_2.setPower(0);
-            intakeTransfer.setPower(0);
-            intakeServo.setPower(0.0); // open when idle
-        }
-    }
-
-    // ============================================================
-    // CONTROLLED SHOOT SEQUENCE
-    // ============================================================
-    protected void autonomousShootSequence() {
-
-        // 1) Spin up shooter
-        activateShooter(true, false); // full power
-        sleep(1500);
-
-        // 2) Feed for 1 second
-        intakeTransfer.setPower(TRANSFER_POWER);
-
-        sleep(3000);
-
-        // 3) Shut down shooter
-        activateShooter(false, false);
     }
 
     // ============================================================

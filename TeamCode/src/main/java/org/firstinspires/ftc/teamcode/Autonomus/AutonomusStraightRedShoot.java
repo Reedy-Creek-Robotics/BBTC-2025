@@ -30,9 +30,9 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        moveForward((72+HALF_OF_BOT_LENGTH),0.9);
+        moveForward((72+HALF_OF_BOT_LENGTH), DRIVE_SPEED);
         rotate(-147,TURN_SPEED);
-        moveForward(-8,0.5);
+        moveForward(-8,0.6);
         shooter_1.setVelocity(2300);
         sleep(2500);
         intakeServo.setPower(1);
@@ -42,7 +42,7 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
         stopShootSequence();
         sleep(100);
 
-        moveForward(8, 0.9);
+        moveForward(8, 0.6);
         rotate(-147, TURN_SPEED);
         sleep(100);
         intakeTransfer.setPower(1.0);
@@ -53,7 +53,7 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
 
         moveForward((-44), DRIVE_SPEED);
         rotate(147, TURN_SPEED);
-        moveForward(-8,DRIVE_SPEED);
+        moveForward(-8, 0.6);
         shooter_1.setVelocity(2300);
         sleep(2500);
         intakeServo.setPower(1.0);
@@ -61,12 +61,10 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
         intakeTransfer.setPower(0.8);
         sleep(5000);
 
-        rotate(-90,TURN_SPEED);
-        moveForward(10,DRIVE_SPEED);
+        rotate(-90, TURN_SPEED);
+        moveForward(10, DRIVE_SPEED);
 
         // End
         stopAll();
     }
-
-
 }
