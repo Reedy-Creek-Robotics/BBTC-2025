@@ -81,8 +81,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
-
-        shooter_1.setVelocityPIDFCoefficients(0.8, 0.0, 0.0, 15.0);
+        shooter_1.setVelocityPIDFCoefficients(1.5, 0.0, 1.2, 15.0);
 
         telemetry.addLine("Hardware initialized");
     }

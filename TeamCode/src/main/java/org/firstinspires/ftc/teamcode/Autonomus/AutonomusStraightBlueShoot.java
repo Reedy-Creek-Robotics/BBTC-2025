@@ -1,19 +1,12 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
-
-import org.firstinspires.ftc.teamcode.mechanisms.BaseTeleOp;
 //RIGHT ONE
 
-@Autonomous(name = "Autonomous : Red Goal")
-public class AutonomusRedGoal extends BaseAutonomus {
+@Autonomous(name = "Autonomous : Blue straight Shoot")
+public class AutonomusStraightBlueShoot extends BaseAutonomus {
 
+    // Drive motors
 
     @Override
     public void runOpMode() {
@@ -31,18 +24,20 @@ public class AutonomusRedGoal extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        moveForward(45,0.9);
+        moveForward((72+HALF_OF_BOT_LENGTH),0.9);
+        rotate(147,TURN_SPEED);
+        moveForward(-8,0.5);
         shooter_1.setVelocity(2300);
         sleep(2500);
-        intakeServo.setPower(1.0);
+        intakeServo.setPower(1);
         sleep(500);
-        intakeTransfer.setPower(1.0);
+        intakeTransfer.setPower(1);
         sleep(5000);
         stopShootSequence();
         sleep(100);
 
         moveForward(8, 0.9);
-        rotate(-147, TURN_SPEED);
+        rotate(147, TURN_SPEED);
         sleep(100);
         intakeTransfer.setPower(1.0);
 
@@ -51,7 +46,7 @@ public class AutonomusRedGoal extends BaseAutonomus {
         intakeTransfer.setPower(0.0);
 
         moveForward((-44), DRIVE_SPEED);
-        rotate(147, TURN_SPEED);
+        rotate(-147, TURN_SPEED);
         moveForward(-8,DRIVE_SPEED);
         shooter_1.setVelocity(2300);
         sleep(2500);
@@ -60,10 +55,12 @@ public class AutonomusRedGoal extends BaseAutonomus {
         intakeTransfer.setPower(0.8);
         sleep(5000);
 
-        rotate(-90,TURN_SPEED);
+        rotate(90,TURN_SPEED);
         moveForward(10,DRIVE_SPEED);
-
+        
         // End
         stopAll();
     }
+
+
 }

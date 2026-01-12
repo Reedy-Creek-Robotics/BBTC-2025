@@ -7,13 +7,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-
-import org.firstinspires.ftc.teamcode.mechanisms.BaseTeleOp;
 //RIGHT ONE
 
-@Autonomous(name = "Autonomous : Red Goal")
-public class AutonomusRedGoal extends BaseAutonomus {
+@Autonomous(name = "Autonomous : Red straight Shoot")
+public class AutonomusStraightRedShoot extends BaseAutonomus {
 
+    // Drive motors
 
     @Override
     public void runOpMode() {
@@ -31,12 +30,14 @@ public class AutonomusRedGoal extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        moveForward(45,0.9);
+        moveForward((72+HALF_OF_BOT_LENGTH),0.9);
+        rotate(-147,TURN_SPEED);
+        moveForward(-8,0.5);
         shooter_1.setVelocity(2300);
         sleep(2500);
-        intakeServo.setPower(1.0);
+        intakeServo.setPower(1);
         sleep(500);
-        intakeTransfer.setPower(1.0);
+        intakeTransfer.setPower(1);
         sleep(5000);
         stopShootSequence();
         sleep(100);
@@ -66,4 +67,6 @@ public class AutonomusRedGoal extends BaseAutonomus {
         // End
         stopAll();
     }
+
+
 }
