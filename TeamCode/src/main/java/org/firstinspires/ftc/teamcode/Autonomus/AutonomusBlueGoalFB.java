@@ -1,19 +1,11 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.teamcode.mechanisms.BaseTeleOp;
-//RIGHT ONE
+@Autonomous(name = "Autonomous : Blue Goal FullBatt")
+public class AutonomusBlueGoalFB extends BaseAutonomus {
 
-@Autonomous(name = "Autonomous : Red Goal")
-public class AutonomusRedGoal extends BaseAutonomus {
-
+    // Drive motors
 
     @Override
     public void runOpMode() {
@@ -32,7 +24,7 @@ public class AutonomusRedGoal extends BaseAutonomus {
         // -------------------------------
 
         moveForward(45,DRIVE_SPEED);
-        shooter_1.setVelocity(2300);
+        shooter_1.setVelocity(FB_TPS);
         sleep(2500);
         intakeServo.setPower(1.0);
         sleep(500);
@@ -42,7 +34,7 @@ public class AutonomusRedGoal extends BaseAutonomus {
         sleep(100);
 
         moveForward(8, 0.6);
-        rotate(-147, TURN_SPEED);
+        rotate(147, TURN_SPEED);
         sleep(100);
         intakeTransfer.setPower(1.0);
 
@@ -51,16 +43,16 @@ public class AutonomusRedGoal extends BaseAutonomus {
         intakeTransfer.setPower(0.0);
 
         moveForward((-44), DRIVE_SPEED);
-        rotate(147, TURN_SPEED);
-        moveForward(-8,0.6);
-        shooter_1.setVelocity(2300);
+        rotate(-147, TURN_SPEED);
+        moveForward(-6,0.6);
+        shooter_1.setVelocity(FB_TPS);
         sleep(2500);
         intakeServo.setPower(1.0);
         sleep(2000);
         intakeTransfer.setPower(0.8);
         sleep(5000);
 
-        rotate(-90,TURN_SPEED);
+        rotate(90,TURN_SPEED);
         moveForward(10,DRIVE_SPEED);
 
         // End

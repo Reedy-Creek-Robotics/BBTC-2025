@@ -28,6 +28,8 @@ public abstract class BaseAutonomus extends LinearOpMode {
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
 
+    protected static final double FB_TPS = 2300;
+    protected static final double HB_TPS = 1850;
     protected static final double DRIVE_SPEED = 0.9;
     protected static final double TURN_SPEED = 0.4;
 
