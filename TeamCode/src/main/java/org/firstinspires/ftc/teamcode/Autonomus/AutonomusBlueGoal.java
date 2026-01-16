@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-//RIGHT ONE
 
-@Autonomous(name = "Auto : Red Goal Shoot")
-public class AutonomusRedGoalFB extends BaseAutonomus {
+@Autonomous(name = "Auto : Blue Goal Shoot")
+public class AutonomusBlueGoal extends BaseAutonomus {
 
+    // Drive motors
 
     @Override
     public void runOpMode() {
@@ -34,7 +34,7 @@ public class AutonomusRedGoalFB extends BaseAutonomus {
         sleep(100);
 
         moveForward(8, DRIVE_SPEED);
-        rotate(-147, TURN_SPEED);
+        rotate(147, TURN_SPEED);
         sleep(100);
         intakeTransfer.setPower(1.0);
 
@@ -43,7 +43,7 @@ public class AutonomusRedGoalFB extends BaseAutonomus {
         intakeTransfer.setPower(0.0);
 
         moveForward((-44), DRIVE_SPEED);
-        rotate(147, TURN_SPEED);
+        rotate(-147, TURN_SPEED);
         shooter_1.setVelocity(SHOOTER_TPS);
         moveForward(-12,DRIVE_SPEED);
         sleep(100);
@@ -52,7 +52,7 @@ public class AutonomusRedGoalFB extends BaseAutonomus {
         intakeTransfer.setPower(0.8);
         sleep(4500);
 
-        rotate(-90,TURN_SPEED);
+        rotate(90,TURN_SPEED);
         moveForward(10,DRIVE_SPEED);
 
         // End
