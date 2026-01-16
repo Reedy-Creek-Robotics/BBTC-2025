@@ -18,9 +18,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name = "motor test Ojas")
 public class MOTOR_TPS_TEST extends LinearOpMode {
     private DcMotor flmotor, frmotor, blmotor, brmotor;
-    private DcMotorEx shooter_1, /*shooter_2,*/ intakeTransfer;
+    private DcMotorEx shooter_1, intakeTransfer;
 
-    private DcMotorEx motorTest;
+//    private DcMotorEx motorTest;
     private CRServo intakeServo;
     private IMU imu;
 
@@ -41,13 +41,11 @@ public class MOTOR_TPS_TEST extends LinearOpMode {
     }
     private void initializeHardware() {
         shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
-        /*shooter_2 = hardwareMap.get(DcMotorEx.class, "shooter_2");*/
-
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
-        motorTest = hardwareMap.get(DcMotorEx.class, "motorTest");
+    //    motorTest = hardwareMap.get(DcMotorEx.class, "motorTest");
 
         intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
         intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
@@ -59,7 +57,6 @@ public class MOTOR_TPS_TEST extends LinearOpMode {
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
-        /* shooter_2.setDirection(DcMotorSimple.Direction.REVERSE);*/
 
         intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -70,13 +67,8 @@ public class MOTOR_TPS_TEST extends LinearOpMode {
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooter_1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        /* shooter_2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        motorTest.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        // Shooter PIDF (recommended starting values)
-        shooter_1.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);
-        /*shooter_2.setVelocityPIDFCoefficients(0.1, 0.0, 0.0, 11.7);*/
+ //       motorTest.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // IMU setup
         imu = hardwareMap.get(IMU.class, "imu");
@@ -87,16 +79,13 @@ public class MOTOR_TPS_TEST extends LinearOpMode {
         telemetry.addLine("Hardware initialized");
     }
     private void handleMechanisms(){
-        double rpm = (motorTest.getVelocity() / 28) * 60;
         if (gamepad1.b && !bWasPressed) testOn = !testOn;
         bWasPressed = gamepad1.b;
         if(testOn){
-            motorTest.setPower(0.8);
-            telemetry.addData("rpm is:", rpm);
-            telemetry.addData("tps is:", motorTest.getVelocity());
+            shooter_1.setPower(1);
+            telemetry.addData("tps is:", shooter_1.getVelocity());
         } else {
-            motorTest.setPower(0.0);
+            shooter_1.setPower(0.0);
         }
     }
-
 }

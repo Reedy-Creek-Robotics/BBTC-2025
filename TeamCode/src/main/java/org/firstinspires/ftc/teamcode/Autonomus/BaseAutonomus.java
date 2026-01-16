@@ -10,7 +10,7 @@ public abstract class BaseAutonomus extends LinearOpMode {
     protected DcMotor flmotor, frmotor, blmotor, brmotor;
 
     // Shooter motors (same as TeleOp)
-    protected DcMotorEx shooter_1 ;/*, shooter_2;*/
+    protected DcMotorEx shooter_1 ;
 
     // Intake + transfer motors (same as TeleOp)
     protected DcMotor intakeTransfer;
@@ -28,8 +28,7 @@ public abstract class BaseAutonomus extends LinearOpMode {
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
 
-    protected static final double FB_TPS = 2300;
-    protected static final double HB_TPS = 1850;
+    protected static final double SHOOTER_TPS = 810;
     protected static final double DRIVE_SPEED = 0.9;
     protected static final double TURN_SPEED = 0.4;
 
@@ -42,7 +41,6 @@ public abstract class BaseAutonomus extends LinearOpMode {
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
 
         shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
-        // shooter_2 = hardwareMap.get(DcMotor.class, "shooter_2");
 
         intakeTransfer = hardwareMap.get(DcMotor.class, "intakeTransfer");
 
@@ -72,7 +70,8 @@ public abstract class BaseAutonomus extends LinearOpMode {
 
         // Default servo position: OPEN
         intakeServo.setPower(0.0);
-        shooter_1.setVelocityPIDFCoefficients(1.5, 0.0, 1.2, 15.0);
+        //PIDF values tuned for 810 TPS and shooting distance of ~45inches
+        shooter_1.setVelocityPIDFCoefficients(14.1010, 0.0, 0.0, 23);
     }
 
     // ============================================================
@@ -137,7 +136,6 @@ public abstract class BaseAutonomus extends LinearOpMode {
     protected void stopAll() {
         intakeTransfer.setPower(0);
         shooter_1.setPower(0);
-        //shooter_2.setPower(0);
         intakeServo.setPower(0.0);
         stopDrive();
     }

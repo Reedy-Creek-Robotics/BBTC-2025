@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "Autonomous : Blue Goal FullBatt")
+@Autonomous(name = "Auto : Blue Goal Shoot")
 public class AutonomusBlueGoalFB extends BaseAutonomus {
 
     // Drive motors
@@ -23,17 +23,17 @@ public class AutonomusBlueGoalFB extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
+        shooter_1.setVelocity(SHOOTER_TPS);
         moveForward(45,DRIVE_SPEED);
-        shooter_1.setVelocity(FB_TPS);
-        sleep(2500);
+        sleep(100);
         intakeServo.setPower(1.0);
         sleep(500);
         intakeTransfer.setPower(1.0);
-        sleep(5000);
+        sleep(4500);
         stopShootSequence();
         sleep(100);
 
-        moveForward(8, 0.6);
+        moveForward(8, DRIVE_SPEED);
         rotate(147, TURN_SPEED);
         sleep(100);
         intakeTransfer.setPower(1.0);
@@ -44,13 +44,13 @@ public class AutonomusBlueGoalFB extends BaseAutonomus {
 
         moveForward((-44), DRIVE_SPEED);
         rotate(-147, TURN_SPEED);
-        moveForward(-6,0.6);
-        shooter_1.setVelocity(FB_TPS);
-        sleep(2500);
+        shooter_1.setVelocity(SHOOTER_TPS);
+        moveForward(-12,DRIVE_SPEED);
+        sleep(100);
         intakeServo.setPower(1.0);
-        sleep(2000);
+        sleep(500);
         intakeTransfer.setPower(0.8);
-        sleep(5000);
+        sleep(4500);
 
         rotate(90,TURN_SPEED);
         moveForward(10,DRIVE_SPEED);

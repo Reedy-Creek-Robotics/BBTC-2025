@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "Autonomous : Straight No shoot (Blue)")
+@Autonomous(name = "Auto : Blue Straight NO-shoot")
 public class AutonomusStraightBlueNoShoot extends BaseAutonomus {
 
 

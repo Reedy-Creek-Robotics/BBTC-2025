@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@Autonomous(name = "Autonomous : Straight No shoot (Red)")
+@Autonomous(name = "Auto : Red Straight NO-shoot")
 public class AutonomusStraightRedNoShoot extends BaseAutonomus {
 
 
