@@ -71,7 +71,7 @@ public abstract class BaseAutonomus extends LinearOpMode {
         // Default servo position: OPEN
         intakeServo.setPower(0.0);
         //PIDF values tuned for 810 TPS and shooting distance of ~45inches
-        shooter_1.setVelocityPIDFCoefficients(14.1010, 0.0, 0.0, 23);
+        shooter_1.setVelocityPIDFCoefficients(16, 0.0, 0.0, 25.5);
     }
 
     // ============================================================

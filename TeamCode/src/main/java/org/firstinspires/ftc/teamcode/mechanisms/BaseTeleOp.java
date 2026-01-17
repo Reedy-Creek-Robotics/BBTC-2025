@@ -80,7 +80,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
         //PIDF values tuned for 810 TPS and shooting distance of ~45inches
-        shooter_1.setVelocityPIDFCoefficients(14.1010, 0.0, 0.0, 23);
+        shooter_1.setVelocityPIDFCoefficients(19, 0.0, 0.0, 25.5);
         telemetry.addLine("Hardware initialized");
     }
 

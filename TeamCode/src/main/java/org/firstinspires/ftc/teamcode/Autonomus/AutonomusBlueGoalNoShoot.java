@@ -22,10 +22,10 @@ public class AutonomusBlueGoalNoShoot extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        sleep(22);
-        moveForward(3, 0.6);
+        sleep(22000);
+        moveForward(5, 0.6);
         rotate(55, TURN_SPEED);
-        moveForward(8, DRIVE_SPEED);
+        moveForward(17, DRIVE_SPEED);
 
         // End
         stopAll();

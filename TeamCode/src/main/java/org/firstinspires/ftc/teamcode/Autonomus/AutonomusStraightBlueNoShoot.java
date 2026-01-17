@@ -22,7 +22,7 @@ public class AutonomusStraightBlueNoShoot extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        sleep(22);
+        sleep(22000);
         moveForward(5, 0.6);
         rotate(-90, TURN_SPEED);
         moveForward(17, DRIVE_SPEED);

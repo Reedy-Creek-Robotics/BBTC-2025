@@ -55,7 +55,7 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
         sleep(4500);
 
         rotate(-90, TURN_SPEED);
-        moveForward(10, DRIVE_SPEED);
+        moveForward(15, DRIVE_SPEED);
 
         // End
         stopAll();
