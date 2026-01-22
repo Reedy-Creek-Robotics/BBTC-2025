@@ -2,11 +2,10 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "servo")
-public class SServo extends OpMode {
-public Servo servo;
+public class Servo extends OpMode {
+    public com.qualcomm.robotcore.hardware.Servo servo;
 
     public void init() {
 
@@ -25,3 +24,4 @@ public Servo servo;
         }
     }
 }
+

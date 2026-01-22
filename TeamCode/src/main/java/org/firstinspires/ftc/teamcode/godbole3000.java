@@ -1,89 +1,51 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Outreach Robot: Robot Relative Drive", group = "Robot")
-
-public class godbole3000 extends OpMode {
-
-    private DcMotor fldrive;
-    private DcMotor frdrive;
-    private DcMotor bldrive;
-    private DcMotor brdrive;
-
-    private IMU imu;  // Added IMU
-
-    // --- TUNING CONSTANTS ---
-    private final double STRAFE_MULTIPLIER = 1.35;   // boosts left/right strafing
-    private final double ROTATE_MULTIPLIER = 0.55;   // reduces rotation sensitivity
+@TeleOp(name = "MecanumTeleOp", group = "Robot")
+public class godbole3000 extends LinearOpMode {
 
     @Override
-    public void init() {
+    public void runOpMode() {
 
-        fldrive = hardwareMap.get(DcMotor.class, "flmotor");
-        frdrive = hardwareMap.get(DcMotor.class, "frmotor");
-        bldrive = hardwareMap.get(DcMotor.class, "blmotor");
-        brdrive = hardwareMap.get(DcMotor.class, "brmotor");
+        // Declare motors (names must match the Robot Configuration)
+        DcMotor frontLeftMotor  = hardwareMap.dcMotor.get("flmotor");
+        DcMotor backLeftMotor   = hardwareMap.dcMotor.get("blmotor");
+        DcMotor frontRightMotor = hardwareMap.dcMotor.get("frmotor");
+        DcMotor backRightMotor  = hardwareMap.dcMotor.get("brmotor");
 
-        bldrive.setDirection(DcMotor.Direction.REVERSE);
-        fldrive.setDirection(DcMotor.Direction.REVERSE);
-        bldrive.setDirection(DcMotor.Direction.REVERSE);
+        // Reverse right side motors
+        frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        fldrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frdrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        bldrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        brdrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        waitForStart();
 
-        // Initialize IMU
-        imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
-        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
-        imu.initialize(new IMU.Parameters(orientationOnRobot));
+        while (opModeIsActive()) {
 
-        telemetry.addLine("Robot-relative drive ONLY");
-    }
+            // Gamepad inputs
+            double y  = -gamepad1.left_stick_y;   // Forward/back
+            double x  =  gamepad1.left_stick_x * 1.1; // Strafe (adjusted)
+            double rx =  -gamepad1.right_stick_x;  // Rotation
 
-    @Override
-    public void loop() {
+            // Normalize motor powers
+            double denominator = Math.max(
+                    Math.abs(y) + Math.abs(x) + Math.abs(rx),
+                    1.0
+            );
 
-        // Reset yaw if A is pressed
-        if (gamepad1.a) {
-            imu.resetYaw();
+            double frontLeftPower  = (y + x + rx) / denominator;
+            double backLeftPower   = (y - x + rx) / denominator;
+            double frontRightPower = (y - x - rx) / denominator;
+            double backRightPower  = (y + x - rx) / denominator;
+
+            // Set motor powers
+            frontLeftMotor.setPower(frontLeftPower);
+            backLeftMotor.setPower(backLeftPower);
+            frontRightMotor.setPower(frontRightPower);
+            backRightMotor.setPower(backRightPower);
         }
-
-        double forward = -gamepad1.left_stick_x;
-        double right   =  gamepad1.left_stick_y;
-        double rotate  =  gamepad1.right_stick_x;
-
-        // Apply precision tuning
-        right  *= STRAFE_MULTIPLIER;
-        rotate *= ROTATE_MULTIPLIER;
-
-        drive(forward, right, rotate);
-    }
-
-    // Robot-relative mecanum drive
-    public void drive(double forward, double right, double rotate) {
-
-        double fl = forward + right + rotate;
-        double fr = forward - right - rotate;
-        double bl = forward - right + rotate;
-        double br = forward + right - rotate;
-
-        double max = Math.max(1.0,
-                Math.max(Math.abs(fl),
-                        Math.max(Math.abs(fr),
-                                Math.max(Math.abs(bl), Math.abs(br)))));
-
-        fldrive.setPower(fl / max);
-        frdrive.setPower(fr / max);
-        bldrive.setPower(bl / max);
-        brdrive.setPower(br / max);
     }
 }
