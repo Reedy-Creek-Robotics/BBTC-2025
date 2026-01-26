@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
+
 @Autonomous(name = "Auto : Blue Goal Shoot")
 public class AutonomusBlueGoal extends BaseAutonomus {
 

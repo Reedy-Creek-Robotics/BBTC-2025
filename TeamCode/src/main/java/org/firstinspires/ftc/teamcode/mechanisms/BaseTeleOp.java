@@ -80,7 +80,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
         //PIDF values tuned for 810 TPS and shooting distance of ~45inches
-        shooter_1.setVelocityPIDFCoefficients(19, 0.0, 0.0, 25.5);
+        shooter_1.setVelocityPIDFCoefficients(550, 0.0, 0.5, 25);
         telemetry.addLine("Hardware initialized");
     }
 
@@ -171,7 +171,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
     //    double rpm = 0;
 
         if (shooterOn) {
-            shooter_1.setVelocity(810);
+            shooter_1.setVelocity(1000);
 
             if (gamepad1.y && !yWasPressed) {
                 servoOn = !servoOn;

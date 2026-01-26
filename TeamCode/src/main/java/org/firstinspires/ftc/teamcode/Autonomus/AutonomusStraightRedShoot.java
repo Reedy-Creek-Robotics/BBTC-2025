@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
+import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
 //RIGHT ONE
 
 @Autonomous(name = "Auto : Red Straight Shoot")

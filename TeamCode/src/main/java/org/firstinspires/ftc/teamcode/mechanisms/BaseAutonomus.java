@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Autonomus;
+package org.firstinspires.ftc.teamcode.mechanisms;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -28,7 +28,7 @@ public abstract class BaseAutonomus extends LinearOpMode {
             (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                     (WHEEL_DIAMETER_INCHES * Math.PI);
 
-    protected static final double SHOOTER_TPS = 810;
+    protected static final double SHOOTER_TPS = 1000;
     protected static final double DRIVE_SPEED = 0.9;
     protected static final double TURN_SPEED = 0.4;
 
@@ -71,7 +71,7 @@ public abstract class BaseAutonomus extends LinearOpMode {
         // Default servo position: OPEN
         intakeServo.setPower(0.0);
         //PIDF values tuned for 810 TPS and shooting distance of ~45inches
-        shooter_1.setVelocityPIDFCoefficients(16, 0.0, 0.0, 25.5);
+        shooter_1.setVelocityPIDFCoefficients(16, 0.0, 0.0, 25);
     }
 
     // ============================================================

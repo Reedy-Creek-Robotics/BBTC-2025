@@ -1,9 +1,8 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
+
+import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
 
 @Autonomous(name = "Auto : Red Straight NO-shoot")
 public class AutonomusStraightRedNoShoot extends BaseAutonomus {

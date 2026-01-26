@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-@Disabled
+
 @TeleOp
 public class PIDF_Testing extends OpMode {
     private DcMotorEx shooter;
@@ -20,10 +20,12 @@ public class PIDF_Testing extends OpMode {
 
     private double HighVelocity = 900;
 
-    private double LowVelocity = 810;
+    private double LowVelocity = 1300;
 
     double F = 0;
     double P = 0;
+
+    double D = 0;
 
     double curTargetVelocity = HighVelocity;
     double[] stepSizes = {10, 1.0, 0.1, 0.001, 0.0001};
@@ -41,7 +43,7 @@ public class PIDF_Testing extends OpMode {
         shooter = hardwareMap.get(DcMotorEx.class, "Shooter_1");
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter.setDirection(DcMotorSimple.Direction.FORWARD);
-        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P, 0, 0, F);
+        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P, 0, D, F);
         shooter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
         telemetry.addLine("init complete");
     }
@@ -66,6 +68,12 @@ public class PIDF_Testing extends OpMode {
         }
         if (gamepad1.dpadLeftWasPressed()) {
             F -= stepSizes[stepIndex];
+        }
+        if(gamepad1.rightBumperWasPressed()){
+            D+= stepSizes[stepIndex];
+        }
+        if(gamepad1.leftBumperWasPressed()){
+            D-= stepSizes[stepIndex];
         }
         if (gamepad1.dpadRightWasPressed()) {
             F += stepSizes[stepIndex];
