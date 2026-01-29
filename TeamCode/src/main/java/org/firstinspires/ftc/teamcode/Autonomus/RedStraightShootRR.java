@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 @Autonomous(name = "Red Straight Shoot Roadrunner", group = "Autonomous")
 public class RedStraightShootRR extends LinearOpMode {
+
     @Override
     public void runOpMode() {
         Pose2d initialPose = new Pose2d(62, 9, Math.toRadians(180));
@@ -34,24 +35,34 @@ public class RedStraightShootRR extends LinearOpMode {
                 new TranslationalVelConstraint(20.0),
                 new AngularVelConstraint(Math.PI / 2)
         ));
+        MinVelConstraint fastVel = new MinVelConstraint(Arrays.asList(
+                new TranslationalVelConstraint(80.0),//80
+                new AngularVelConstraint(Math.PI / 2)
+        ));
         ProfileAccelConstraint slowAccel = new ProfileAccelConstraint(-15.0, 15.0);
 
         // Slow down the turn speed specifically (Max Ang Vel, Min Ang Accel, Max Ang Accel)
-        TurnConstraints preciseTurn = new TurnConstraints(2.0, -2.0, 2.0);
+        TurnConstraints preciseTurn = new TurnConstraints(3.0, -2.0, 2.0);
         TurnConstraints fastTurn = new TurnConstraints(5.0,-5.0,5.0);
+        ProfileAccelConstraint fastAccel = new ProfileAccelConstraint(-30.0,30.0);
+
 
         Action trajectory = drive.actionBuilder(initialPose)
                 .splineTo(new Vector2d(0, 13), Math.toRadians(180))
                 .splineTo(new Vector2d(-34, 34), Math.toRadians(180))
 
                 // 1. Slow down this massive turn to stop the over-rotation
+                .stopAndAdd(drive.shooterOn())
                 .turn(Math.toRadians(-230), preciseTurn)
                 .waitSeconds(0.3) // Give it a moment to settle the "tilt" before shooting
-                .stopAndAdd(drive.shootAction())
+                .stopAndAdd(drive.transferOn())
+                .waitSeconds(4)
+                .stopAndAdd(drive.stopAll())
+
 
                 // 2. Approach intake slowly to prevent overshooting the block
                // .splineTo(new Vector2d(-24, 10), Math.toRadians(0), slowVel, slowAccel)
-                .strafeTo(new com.acmerobotics.roadrunner.Vector2d(-13.6, 14.6))
+                .strafeTo(new com.acmerobotics.roadrunner.Vector2d(-13.6, 14.6),fastVel,fastAccel)
                 .turn(Math.toRadians(-225), fastTurn)
 
 
@@ -63,13 +74,16 @@ public class RedStraightShootRR extends LinearOpMode {
                 .strafeTo(new Vector2d(-12, 53),intakeVel,intakeAccel)
                 .stopAndAdd(drive.intakeOff())
 
-                .strafeTo(new Vector2d(-12, 34))
-                .strafeTo(new Vector2d(-34, 34))
+                .strafeTo(new Vector2d(-12, 34),fastVel,fastAccel)
+                .strafeTo(new Vector2d(-34, 34),fastVel,fastAccel)
 
                 // 3. Slow down the return turn for the final shot
+                .stopAndAdd(drive.shooterOn())
                 .turn(Math.toRadians(230), preciseTurn)
                 .waitSeconds(0.3)
-                .stopAndAdd(drive.shootAction())
+                .stopAndAdd(drive.transferOn())
+                .waitSeconds(4)
+                .stopAndAdd(drive.stopAll())
 
                 .strafeTo(new Vector2d(5, 22))
                 .build();

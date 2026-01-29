@@ -1,79 +1,61 @@
 package org.firstinspires.ftc.teamcode.testing;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import java.util.List;
 
-import java.util.HashMap;
-import java.util.Map;
-@Disabled
-@TeleOp(name = "AprilTag Color Mapping", group = "Testing")
+@TeleOp(name = "AprilTag Pose Tracking", group = "Testing")
 public class Camera_Testing extends LinearOpMode {
 
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
-    // Map tag IDs to “color codes” or actions
-    private final Map<Integer, String> tagColorMap = new HashMap<Integer, String>() {{
-        put(1, "Red");
-        put(2, "Blue");
-        put(3, "Green");
-        put(4, "Yellow");
-        put(5, "Purple");
-    }};
-
     @Override
     public void runOpMode() {
-
+        // Initialize the processor
         aprilTag = new AprilTagProcessor.Builder()
                 .setDrawAxes(true)
                 .setDrawTagID(true)
                 .build();
 
+        // Initialize the portal
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .addProcessor(aprilTag)
                 .build();
 
-        telemetry.addLine("AprilTag system initialized");
+        telemetry.addLine("Wait for start...");
         telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
+            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
 
-            telemetry.clear();
-            boolean tagFound = false;
-
-            for (AprilTagDetection detection : aprilTag.getDetections()) {
-
-                int id = detection.id;
-
-                if (tagColorMap.containsKey(id)) {
-
-                    double distanceInches = detection.ftcPose.range;
-                    String color = tagColorMap.get(id);
-
-                    telemetry.addLine("AprilTag detected");
-                    telemetry.addData("Tag ID", id);
-                    telemetry.addData("Distance (in)", "%.1f", distanceInches);
-                    telemetry.addData("Color Code", color);
-
-                    tagFound = true;
-                    break; // Only show first recognized tag
+            if (currentDetections.size() > 0) {
+                for (AprilTagDetection detection : currentDetections) {
+                    // Check if pose data is available (it might be null if tag is partially obscured)
+                    if (detection.ftcPose != null) {
+                        telemetry.addLine(String.format("--- Tag ID %d ---", detection.id));
+                        telemetry.addData("Distance (Range)", "%.2f in", detection.ftcPose.range);
+                        telemetry.addData("X Offset (Lateral)", "%.2f in", detection.ftcPose.x);
+                        telemetry.addData("Y Offset (Forward)", "%.2f in", detection.ftcPose.y);
+                        telemetry.addData("Z Offset (Height)", "%.2f in", detection.ftcPose.z);
+                        telemetry.addData("Yaw (Angle)", "%.2f deg", detection.ftcPose.yaw);
+                    } else {
+                        telemetry.addLine(String.format("Tag ID %d detected, but pose is unavailable", detection.id));
+                    }
                 }
-            }
-
-            if (!tagFound) {
-                telemetry.addLine("No recognized tag visible");
+            } else {
+                telemetry.addLine("No tags detected");
             }
 
             telemetry.update();
+            sleep(20); // Small delay to prevent telemetry spam
         }
     }
 }

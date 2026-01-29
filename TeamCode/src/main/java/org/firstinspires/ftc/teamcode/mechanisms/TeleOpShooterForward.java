@@ -1,7 +1,8 @@
 package org.firstinspires.ftc.teamcode.mechanisms;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
+@Disabled
 @TeleOp(name = "TeleOp: Shooter Forward")
 public class TeleOpShooterForward extends BaseTeleOp {
     @Override

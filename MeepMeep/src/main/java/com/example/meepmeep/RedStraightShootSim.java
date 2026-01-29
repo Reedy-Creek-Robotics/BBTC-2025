@@ -24,26 +24,30 @@ public class RedStraightShootSim  {
                 .splineTo(new Vector2d(0, 13), Math.toRadians(180))
                 .splineTo(new Vector2d(-34, 34), Math.toRadians(180))
 
-                // 1. Slow down this massive turn to stop the over-rotation
-                .turn(Math.toRadians(-230))
-                .waitSeconds(0.3) // Give it a moment to settle the "tilt" before shooting
+                // Turn and Shoot 1
+                .turn(Math.toRadians(-45))
+                .waitSeconds(0.3)
 
-                // 2. Approach intake slowly to prevent overshooting the block
-                // .splineTo(new Vector2d(-24, 10), Math.toRadians(0), slowVel, slowAccel)
-                .strafeTo(new com.acmerobotics.roadrunner.Vector2d(-13.6, 14.6))
+                // Navigate to Intake
+                .strafeTo(new Vector2d(-13.6, 14.6))
                 .turn(Math.toRadians(-225))
 
-                //  .splineTo(new Vector2d(-12, 34), Math.toRadians(90), slowVel, slowAccel)
+                // Start Intake
 
+                // Slow crawl to pick up the block/ring
                 .strafeTo(new Vector2d(-12, 53))
 
+                // Stop Intake
+
+                // Return to shooting position
                 .strafeTo(new Vector2d(-12, 34))
                 .strafeTo(new Vector2d(-34, 34))
 
-                // 3. Slow down the return turn for the final shot
+                // Turn and Shoot 2
                 .turn(Math.toRadians(230))
                 .waitSeconds(0.3)
 
+                // Park
                 .strafeTo(new Vector2d(5, 22))
                 .build());
 
