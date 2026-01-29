@@ -22,7 +22,7 @@ public class RedStraightShootSim  {
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(62,9,Math.toRadians(180)))
                         .waitSeconds(5)
                 .splineTo(new Vector2d(0, 13), Math.toRadians(180))
-                .splineTo(new Vector2d(-34, 34), Math.toRadians(180))
+                .splineTo(new Vector2d(-20, 24), Math.toRadians(180))//-34,34
 
                 // Turn and Shoot 1
                 .turn(Math.toRadians(-45))

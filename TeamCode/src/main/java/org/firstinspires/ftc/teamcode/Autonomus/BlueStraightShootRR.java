@@ -17,15 +17,15 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
 import java.util.Arrays;
 
-@Autonomous(name = "Red Straight Shoot RR", group = "Autonomous")
-public class RedStraightShootRR extends LinearOpMode {
+@Autonomous(name = "Blue Straight Shoot RR", group = "Autonomous")
+public class BlueStraightShootRR extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        Camera camera = new Camera(hardwareMap);
+       /* Camera camera = new Camera(hardwareMap);
 
         // Final coordinates sourced from the camera
-      /*  Pose2d initialPose = null;
+        Pose2d initialPose = null;
 
         // --- INIT PHASE: SOURCE OF TRUTH ---
         while (!isStarted() && !isStopRequested()) {
@@ -40,22 +40,23 @@ public class RedStraightShootRR extends LinearOpMode {
             }
 
             // Fallback display if not locked yet
-            Pose2d displayPose = (initialPose != null) ? initialPose : new Pose2d(62, 9, 0);
+            Pose2d displayPose = (initialPose != null) ? initialPose : new Pose2d(62, -9, 0);
             telemetry.addData("X", "%.2f", displayPose.position.x);
             telemetry.addData("Y", "%.2f", displayPose.position.y);
             telemetry.addData("Heading", "%.1f deg", Math.toDegrees(displayPose.heading.toDouble()));
             telemetry.update();
         }
 
-        if (isStopRequested() || initialPose == null) return;
+        if (isStopRequested() || initialPose == null) return;*/
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);*/
-
-        Pose2d setStartPose = new Pose2d(62,9,Math.toRadians(180));
+        Pose2d setStartPose = new Pose2d(62,-9,Math.toRadians(180));
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
+
         waitForStart();
 
+
+        //MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         // Define Constraints
         MinVelConstraint intakeVel = new MinVelConstraint(Arrays.asList(
                 new TranslationalVelConstraint(10.0), new AngularVelConstraint(Math.PI / 4)));
@@ -69,38 +70,37 @@ public class RedStraightShootRR extends LinearOpMode {
                 // setTangent(180) tells the robot to move toward the center of the field
                 .setTangent(Math.toRadians(180))
                 // Move to (0,13) while rotating to face the field (180 degrees)
-                .splineToLinearHeading(new Pose2d(0, 13, Math.toRadians(180)), Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-22, 29, Math.toRadians(180)), Math.toRadians(180))
-
-                .stopAndAdd(drive.shooterOn())
-                .turn(Math.toRadians(-230), preciseTurn)
-                .waitSeconds(0.3)
-                .stopAndAdd(drive.transferOn())
-                .waitSeconds(3.5)//4
-                .stopAndAdd(drive.intakeOff())
-                .stopAndAdd(drive.stopAll())
-
-                .strafeTo(new Vector2d(-13.6, 14.6), fastVel, fastAccel)
-                .turn(Math.toRadians(-225), preciseTurn)
-
-                .stopAndAdd(drive.intakeOn())
-                .strafeTo(new Vector2d(-12, 53), intakeVel, new ProfileAccelConstraint(-10, 10))
-                .stopAndAdd(drive.intakeOff())
-
-//                .strafeTo(new Vector2d(-12, 34), fastVel, fastAccel)
-                .strafeTo(new Vector2d(-22, 29), fastVel, fastAccel)
+                .splineToLinearHeading(new Pose2d(0, -13, Math.toRadians(180)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-22, -29, Math.toRadians(180)), Math.toRadians(180))
 
                 .stopAndAdd(drive.shooterOn())
                 .turn(Math.toRadians(230), preciseTurn)
                 .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
-                .waitSeconds(3.5)//4
+                .waitSeconds(4)
                 .stopAndAdd(drive.stopAll())
 
-                .strafeTo(new Vector2d(5, 22))
+                .strafeTo(new Vector2d(-13.6, -14.6), fastVel, fastAccel)
+                .turn(Math.toRadians(225), preciseTurn)
+
+                .stopAndAdd(drive.intakeOn())
+                .strafeTo(new Vector2d(-12, -53), intakeVel, new ProfileAccelConstraint(-10, 10))
+                .stopAndAdd(drive.intakeOff())
+
+//                .strafeTo(new Vector2d(-12, -34), fastVel, fastAccel)
+                .strafeTo(new Vector2d(-22, -29), fastVel, fastAccel)
+
+                .stopAndAdd(drive.shooterOn())
+                .turn(Math.toRadians(-230), preciseTurn)
+                .waitSeconds(0.3)
+                .stopAndAdd(drive.transferOn())
+                .waitSeconds(4)
+                .stopAndAdd(drive.stopAll())
+
+                .strafeTo(new Vector2d(5, -22))
                 .build();
 
         Actions.runBlocking(trajectory);
-        camera.stop();
+       // camera.stop();
     }
 }
