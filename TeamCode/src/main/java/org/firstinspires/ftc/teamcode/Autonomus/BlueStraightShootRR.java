@@ -49,7 +49,7 @@ public class BlueStraightShootRR extends LinearOpMode {
 
         if (isStopRequested() || initialPose == null) return;*/
 
-        Pose2d setStartPose = new Pose2d(62,-9,Math.toRadians(180));
+        Pose2d setStartPose = new Pose2d(62,-12,Math.toRadians(180));
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
 
@@ -70,17 +70,17 @@ public class BlueStraightShootRR extends LinearOpMode {
                 // setTangent(180) tells the robot to move toward the center of the field
                 .setTangent(Math.toRadians(180))
                 // Move to (0,13) while rotating to face the field (180 degrees)
-                .splineToLinearHeading(new Pose2d(0, -13, Math.toRadians(180)), Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-22, -29, Math.toRadians(180)), Math.toRadians(180))
-
+               // .splineToLinearHeading(new Pose2d(0, -13, Math.toRadians(180)), Math.toRadians(180))
+               // .splineToLinearHeading(new Pose2d(-22, -29, Math.toRadians(180)), Math.toRadians(180))
+                .strafeTo(new Vector2d(-12,-12), fastVel,fastAccel)
                 .stopAndAdd(drive.shooterOn())
-                .turn(Math.toRadians(230), preciseTurn)
+                .turn(Math.toRadians(-135), preciseTurn)
                 .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(4)
                 .stopAndAdd(drive.stopAll())
 
-                .strafeTo(new Vector2d(-13.6, -14.6), fastVel, fastAccel)
+                //.strafeTo(new Vector2d(-13.6, -14.6), fastVel, fastAccel)
                 .turn(Math.toRadians(225), preciseTurn)
 
                 .stopAndAdd(drive.intakeOn())
@@ -88,10 +88,10 @@ public class BlueStraightShootRR extends LinearOpMode {
                 .stopAndAdd(drive.intakeOff())
 
 //                .strafeTo(new Vector2d(-12, -34), fastVel, fastAccel)
-                .strafeTo(new Vector2d(-22, -29), fastVel, fastAccel)
+                .strafeTo(new Vector2d(-12, -12), fastVel, fastAccel)
 
                 .stopAndAdd(drive.shooterOn())
-                .turn(Math.toRadians(-230), preciseTurn)
+                .turn(Math.toRadians(135), preciseTurn)
                 .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(4)

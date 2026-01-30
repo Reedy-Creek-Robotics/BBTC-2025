@@ -60,7 +60,7 @@ public final class MecanumDrive {
         // Drive model parameters
         public static final double inPerTick = 0.023278;
 
-        public static double tps = 1000;
+        public static double tps = 900;
         public double lateralInPerTick = inPerTick;
         public double trackWidth = 14;
 
@@ -200,7 +200,7 @@ public final class MecanumDrive {
 
         // --- SHOOTER & INTAKE CONFIGURATION ---
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
-        shooter_1.setVelocityPIDFCoefficients(900, 0.0, 0.5, 25.5);//P = 550 F = 25
+        shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25);//P = 550 F = 25
 
         intakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);

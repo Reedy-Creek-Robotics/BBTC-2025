@@ -1,18 +1,19 @@
 package org.firstinspires.ftc.teamcode.mechanisms;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-@Disabled
-@TeleOp(name = "TeleOp: Shooter Forward")
-public class TeleOpShooterForward extends BaseTeleOp {
+
+@TeleOp(name = "TeleOp: Red")
+public class TeleOp_Red extends BaseTeleOp {
     @Override
     public void runOpMode() throws InterruptedException {
         initializeHardware(); // Calling the function from the Brain
         telemetry.update();
+        redChannel();
         waitForStart();
+        cameraStart();
 
         while (opModeIsActive()) {
-            handleDrive(gamepad1.left_stick_y, -gamepad1.left_stick_x);
+            handleDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x);
             handleMechanisms();
             telemetry.update();
             camera.update();

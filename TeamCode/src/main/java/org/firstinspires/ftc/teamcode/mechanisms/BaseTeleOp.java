@@ -83,7 +83,9 @@ public abstract class BaseTeleOp extends LinearOpMode {
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
         //PIDF values tuned for 1000 TPS and shooting distance of ~45inches
-        shooter_1.setVelocityPIDFCoefficients(900, 0.0, 0.5, 25.5);//P = 550 F = 25
+       // shooter_1.setVelocityPIDFCoefficients(900, 0.0, 0.5, 25.5);//P = 550 F = 25 // older
+       // shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
+        shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=900 (mid shot)
         telemetry.addLine("Hardware initialized");
     }
 
@@ -142,7 +144,15 @@ public abstract class BaseTeleOp extends LinearOpMode {
 
         drive(limitedForward, limitedRight, limitedRotate);
     }
-
+    protected void blueChannel(){
+        camera.switchToBlue();
+    }
+    protected void redChannel(){
+        camera.switchToRed();
+    }
+    protected void cameraStart(){
+        camera.startCamera();
+    }
     protected void handleMechanisms() {
 
         // --- Intake toggle (X button) ---
@@ -175,7 +185,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
     //    double rpm = 0;
 
         if (shooterOn) {
-            shooter_1.setVelocity(1000);
+            shooter_1.setVelocity(900);
 
             if (gamepad1.y && !yWasPressed) {
                 servoOn = !servoOn;
