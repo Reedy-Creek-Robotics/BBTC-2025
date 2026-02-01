@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.IMU;
 
 public abstract class BaseTeleOp extends LinearOpMode {
@@ -15,8 +16,10 @@ public abstract class BaseTeleOp extends LinearOpMode {
     protected CRServo intakeServo;
 
     protected Camera camera;
-    private boolean cameraOn = false; // Added missing declaration
+    private boolean intakeReverseOn = false; // Added missing declaration
     private boolean aWasPressed = false; // Added missing declaration
+
+    private boolean apriltagSeen = false;
     protected double limitedForward = 0, limitedRight = 0, limitedRotate = 0;
 
     private IMU imu;
@@ -33,12 +36,14 @@ public abstract class BaseTeleOp extends LinearOpMode {
     private boolean servoOn = false;
     //private boolean cameraOn = false;
     private boolean yWasPressed = false;
-
-
-  //  private boolean aWasPressed = false;
-
-    private boolean servoAllowed = false;
-
+    private boolean dpadUpWasPressed = false;
+    private boolean dpadDownWasPressed = false;
+    private boolean midShotOn = true;
+    private boolean longShotOn = false;
+    private boolean manualShotOverrideOn = true;
+    private boolean cameraOn = false;
+    private double distance = -1;
+    private double tagID = -1;
 
     private double lastForward = 0;
     private double lastRight = 0;
@@ -64,6 +69,12 @@ public abstract class BaseTeleOp extends LinearOpMode {
         frmotor.setDirection(DcMotor.Direction.FORWARD);
         brmotor.setDirection(DcMotor.Direction.FORWARD);
 
+        flmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        blmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        blmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
         intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -82,10 +93,12 @@ public abstract class BaseTeleOp extends LinearOpMode {
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
+        cameraOn = true;
+       // shooter_1.setVelocityPIDFCoefficients(P,0.0,0.5,F);
         //PIDF values tuned for 1000 TPS and shooting distance of ~45inches
        // shooter_1.setVelocityPIDFCoefficients(900, 0.0, 0.5, 25.5);//P = 550 F = 25 // older
-       // shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
-        shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=900 (mid shot)
+      //  shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
+        //shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=900 (mid shot)
         telemetry.addLine("Hardware initialized");
     }
 
@@ -154,6 +167,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
         camera.startCamera();
     }
     protected void handleMechanisms() {
+        camera.update();
 
         // --- Intake toggle (X button) ---
         if (gamepad1.x && !xWasPressed) {
@@ -161,12 +175,11 @@ public abstract class BaseTeleOp extends LinearOpMode {
         }
         xWasPressed = gamepad1.x;
 
-        // --- Camera toggle (Y button) ---
+        // Intake reversal (toggle) (A button)
         if (gamepad1.a && !aWasPressed) {
-            cameraOn = !cameraOn;
+            intakeReverseOn = !intakeReverseOn;
         }
         aWasPressed = gamepad1.a;
-        camera.update();
 
         // --- Shooter toggle (B button) ---
         if (gamepad1.b && !bWasPressed) {
@@ -174,37 +187,50 @@ public abstract class BaseTeleOp extends LinearOpMode {
         }
         bWasPressed = gamepad1.b;
 
-        if(servoOn){
-            intakeServo.setPower(1);
-            servoAllowed = false;
+        // Servo toggle (Y button)
+        if (gamepad1.y && !yWasPressed) {
+            servoOn = !servoOn;
+        }
+        yWasPressed = gamepad1.y;
+
+        if (gamepad1.dpad_up && !dpadUpWasPressed) {
+            longShotOn = !longShotOn;
+        }
+        dpadUpWasPressed = gamepad1.dpad_up;
+
+        if (gamepad1.dpad_down && !dpadDownWasPressed) {
+            midShotOn = !midShotOn;
+        }
+        dpadDownWasPressed = gamepad1.dpad_down;
+
+        if(longShotOn){
+            shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
         } else {
-            intakeServo.setPower(0);
+            shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=1000 (mid shot)
         }
 
-    //    double tps = 0;
-    //    double rpm = 0;
-
         if (shooterOn) {
-            shooter_1.setVelocity(900);
-
-            if (gamepad1.y && !yWasPressed) {
-                servoOn = !servoOn;
+            shooter_1.setVelocity(1000);//900
+            intakeServo.setPower(servoOn ? 1.0 : 0.0);
+            tagID = camera.getTid();
+            distance = camera.getDistance();
+            apriltagSeen = (distance > 0) ? true : false;
+            if (!manualShotOverrideOn) {
+                if (distance > 90) {
+                    shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
+                } else if (distance < 90) {
+                    shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=1000 (mid shot)
+                } else {
+                    apriltagSeen = false;
+                }
             }
-            yWasPressed = gamepad1.y;
-
-      //      tps = shooter_1.getVelocity();
-      //      rpm = (tps * 60) / 28;
-            //rpm reached or manual override
-           /* if (!servoAllowed && tps > SERVO_START_TICKS || yWasPressed) {
-                servoAllowed = true;
-            } else if (servoAllowed && tps < SERVO_START_TICKS) {
-                servoAllowed = false;
-            }*/
         } else {
             shooter_1.setVelocity(0);
             servoOn = false;
-            servoAllowed = false;
             yWasPressed = false;
+            apriltagSeen = false;
+            distance = 0;
+            tagID = 0;
             // FORCE intake OFF when shooter turns OFF
             if (lastShooterOn) {
                 intakeOn = false;
@@ -212,25 +238,28 @@ public abstract class BaseTeleOp extends LinearOpMode {
         }
         lastShooterOn = shooterOn;
 
-      /*  if (cameraOn) {
-            camera.enable();
-        } else {
-            camera.disable();
-        }*/
+        if (intakeReverseOn) {
+            if (shooterOn) {
+                intakeReverseOn = false;
+            } else {
+                intakeTransfer.setPower(-0.5);
+            }
+        }
+        // Priority 2: Standard Intake
+        else if (intakeOn) {
+            // If the shooter is on, we want more speed to feed the shooter faster
+            // While collecting the balls, we want less speed to avoid first ball jamming up the shooter.
+            intakeTransfer.setPower( shooterOn ? 1.0 : 0.75);
+        }
+        // Priority 3: Default
+        else {
+            intakeTransfer.setPower(0.0);
+        }
 
-    double distance = camera.getDistance();
-       double tagid = camera.getTid();
-
-        intakeServo.setPower(servoAllowed ? 1.0 : 0.0);
-        intakeTransfer.setPower(intakeOn ? 1.0 : 0.0);
-
-//        telemetry.addData("Shooter ON", shooterOn ? "YES" : "NO");
-//        telemetry.addData("Raw ticks/sec", tps);
-//        telemetry.addData("RPM", rpm);
         telemetry.addData("Camera Active", cameraOn);
-        telemetry.addData("Distance", "%.2f", camera.getDistance());
-        telemetry.addData("Tag ID", camera.getTid());
-        telemetry.addData("X Offset", "%.2f", camera.getTx());
+        telemetry.addData("April Tag seen: ",apriltagSeen);
+        telemetry.addData("Distance", "%.2f", distance);
+        telemetry.addData("Tag ID", tagID);
 
         telemetry.update();
     }

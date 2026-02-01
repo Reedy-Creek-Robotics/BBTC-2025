@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
-
+@Disabled
 @Autonomous(name = "Auto : Blue Goal Shoot")
 public class AutonomusBlueGoal extends BaseAutonomus {
 

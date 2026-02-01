@@ -12,18 +12,17 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.mechanisms.Camera;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
 import java.util.Arrays;
 
-@Autonomous(name = "Blue Straight Shoot RR", group = "Autonomous")
-public class BlueStraightShootRR extends LinearOpMode {
+@Autonomous(name = "Red Goal Shoot RR", group = "Autonomous")
+public class RedGoalShootRR extends LinearOpMode {
 
     @Override
     public void runOpMode() {
 
-        Pose2d setStartPose = new Pose2d(62,-12,Math.toRadians(180));
+        Pose2d setStartPose = new Pose2d(-50.4,50.3,Math.toRadians(-45));
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
 
@@ -41,31 +40,32 @@ public class BlueStraightShootRR extends LinearOpMode {
         Action trajectory = drive.actionBuilder(setStartPose)
                 // setTangent(180) tells the robot to move toward the center of the field
                 .setTangent(Math.toRadians(180))
-                .strafeTo(new Vector2d(-12,-12), fastVel,fastAccel)
+                .strafeTo(new Vector2d(-12,12), fastVel,fastAccel)
+
                 .stopAndAdd(drive.shooterOn())
-                .turn(Math.toRadians(-133.67), preciseTurn)
-                .waitSeconds(0.3)
+                .waitSeconds(1)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(4)
                 .stopAndAdd(drive.stopAll())
-                .strafeTo(new Vector2d(-12,-12))
+                .strafeTo(new Vector2d(-12,12))
 
-                .turn(Math.toRadians(225), preciseTurn)
+
+                .turn(Math.toRadians(-225), preciseTurn)
 
                 .stopAndAdd(drive.intakeOn())
-                .strafeTo(new Vector2d(-12, -49), intakeVel, new ProfileAccelConstraint(-10, 10))
+                .strafeTo(new Vector2d(-12, 49), intakeVel, new ProfileAccelConstraint(-10, 10))
                 .stopAndAdd(drive.intakeOff())
 
-                .strafeTo(new Vector2d(-12, -12), fastVel, fastAccel)
+                .strafeTo(new Vector2d(-12, 12), fastVel, fastAccel)
 
                 .stopAndAdd(drive.shooterOn())
-                .turn(Math.toRadians(135), preciseTurn)
-                .waitSeconds(0.3)
+                .turn(Math.toRadians(-135), preciseTurn)
+                .waitSeconds(1)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(4)
                 .stopAndAdd(drive.stopAll())
 
-                .strafeTo(new Vector2d(5, -22))
+                .strafeTo(new Vector2d(5, 22))
                 .build();
 
         Actions.runBlocking(trajectory);

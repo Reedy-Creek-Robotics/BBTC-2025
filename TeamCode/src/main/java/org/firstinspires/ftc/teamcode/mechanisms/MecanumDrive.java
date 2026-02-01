@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 
 import androidx.annotation.NonNull;
 
-import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
@@ -37,11 +36,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.sun.source.util.TreePathScanner;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.Drawing;
 import org.firstinspires.ftc.teamcode.Localizer;
 
 import java.lang.Math;
@@ -329,11 +326,10 @@ public final class MecanumDrive {
         return new InstantAction(() -> {
             intakeTransfer.setPower(1.0);
             intakeServo.setPower(1.0);
-
         });
     }
     public Action intakeOn() {
-        return new InstantAction(() -> intakeTransfer.setPower(1.0));
+        return new InstantAction(() -> intakeTransfer.setPower(0.75));
     }
 
     public Action intakeOff() {

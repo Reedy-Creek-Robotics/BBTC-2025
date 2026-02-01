@@ -22,34 +22,6 @@ public class RedStraightShootRR extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        Camera camera = new Camera(hardwareMap);
-
-        // Final coordinates sourced from the camera
-      /*  Pose2d initialPose = null;
-
-        // --- INIT PHASE: SOURCE OF TRUTH ---
-        while (!isStarted() && !isStopRequested()) {
-            camera.update();
-            Pose2d visionPose = camera.getFieldPose();
-
-            if (visionPose != null) {
-                initialPose = visionPose;
-                telemetry.addData("Status", "CAMERA LOCKED");
-            } else {
-                telemetry.addData("Status", "SEARCHING FOR TAG...");
-            }
-
-            // Fallback display if not locked yet
-            Pose2d displayPose = (initialPose != null) ? initialPose : new Pose2d(62, 9, 0);
-            telemetry.addData("X", "%.2f", displayPose.position.x);
-            telemetry.addData("Y", "%.2f", displayPose.position.y);
-            telemetry.addData("Heading", "%.1f deg", Math.toDegrees(displayPose.heading.toDouble()));
-            telemetry.update();
-        }
-
-        if (isStopRequested() || initialPose == null) return;
-
-        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);*/
 
         Pose2d setStartPose = new Pose2d(62,12,Math.toRadians(180));
 
@@ -68,31 +40,27 @@ public class RedStraightShootRR extends LinearOpMode {
         Action trajectory = drive.actionBuilder(setStartPose)
                 // setTangent(180) tells the robot to move toward the center of the field
                 .setTangent(Math.toRadians(180))
-                // Move to (0,13) while rotating to face the field (180 degrees)
-                //.splineToLinearHeading(new Pose2d(0, 13, Math.toRadians(180)), Math.toRadians(180))
-                //.splineToLinearHeading(new Pose2d(-22, 29, Math.toRadians(180)), Math.toRadians(180))
                 .strafeTo(new Vector2d(-12,12), fastVel,fastAccel)
 
                 .stopAndAdd(drive.shooterOn())
-                .turn(Math.toRadians(-135), preciseTurn)
+                .turn(Math.toRadians(133.67), preciseTurn)
                 .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
-                .waitSeconds(3.5)//4
+                .waitSeconds(3.5)
                 .stopAndAdd(drive.intakeOff())
                 .stopAndAdd(drive.stopAll())
+                .strafeTo(new Vector2d(-12,12))
 
-              //  .strafeTo(new Vector2d(-13.6, 14.6), fastVel, fastAccel)
                 .turn(Math.toRadians(-225), preciseTurn)
 
                 .stopAndAdd(drive.intakeOn())
-                .strafeTo(new Vector2d(-12, 53), intakeVel, new ProfileAccelConstraint(-10, 10))
+                .strafeTo(new Vector2d(-12, 49), intakeVel, new ProfileAccelConstraint(-10, 10))
                 .stopAndAdd(drive.intakeOff())
 
-//                .strafeTo(new Vector2d(-12, 34), fastVel, fastAccel)
                 .strafeTo(new Vector2d(-12, 12), fastVel, fastAccel)
 
                 .stopAndAdd(drive.shooterOn())
-                .turn(Math.toRadians(135), preciseTurn)
+                .turn(Math.toRadians(-133.67), preciseTurn)
                 .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(3.5)//4
@@ -102,6 +70,5 @@ public class RedStraightShootRR extends LinearOpMode {
                 .build();
 
         Actions.runBlocking(trajectory);
-        camera.stop();
     }
 }

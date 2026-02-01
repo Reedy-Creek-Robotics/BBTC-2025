@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+@Disabled
 @TeleOp(name = "motor test Ojas")
 public class MOTOR_TPS_TEST extends LinearOpMode {
     private DcMotor flmotor, frmotor, blmotor, brmotor;
