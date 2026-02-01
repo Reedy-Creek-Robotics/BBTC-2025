@@ -242,7 +242,9 @@ public abstract class BaseTeleOp extends LinearOpMode {
             if (shooterOn) {
                 intakeReverseOn = false;
             } else {
-                intakeTransfer.setPower(-0.5);
+                intakeTransfer.setPower(-0.3);
+                intakeServo.setPower(-0.75);
+                intakeOn = false;
             }
         }
         // Priority 2: Standard Intake
@@ -254,6 +256,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
         // Priority 3: Default
         else {
             intakeTransfer.setPower(0.0);
+            intakeServo.setPower(0.0);
         }
 
         telemetry.addData("Camera Active", cameraOn);

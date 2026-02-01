@@ -56,7 +56,6 @@ public final class MecanumDrive {
 
         // Drive model parameters
         public static final double inPerTick = 0.023278;
-
         public static double tps = 900;
         public double lateralInPerTick = inPerTick;
         public double trackWidth = 14;
@@ -103,7 +102,6 @@ public final class MecanumDrive {
     public final LazyImu lazyImu;
     public final Localizer localizer;
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
-
     public class DriveLocalizer implements Localizer {
         public final Encoder leftFront, leftBack, rightBack, rightFront;
         public final IMU imu;
@@ -320,7 +318,7 @@ public final class MecanumDrive {
 
     // --- SHOOTER ACTIONS ---
     public Action shooterOn() {
-       return new InstantAction(() -> shooter_1.setVelocity(Params.tps));
+        return new InstantAction(() -> shooter_1.setVelocity(Params.tps));
     }
     public Action transferOn() {
         return new InstantAction(() -> {
@@ -329,7 +327,7 @@ public final class MecanumDrive {
         });
     }
     public Action intakeOn() {
-        return new InstantAction(() -> intakeTransfer.setPower(0.75));
+        return new InstantAction(() -> intakeTransfer.setPower(0.7));
     }
 
     public Action intakeOff() {
