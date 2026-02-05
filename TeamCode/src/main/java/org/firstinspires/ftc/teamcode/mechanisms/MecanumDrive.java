@@ -56,7 +56,7 @@ public final class MecanumDrive {
 
         // Drive model parameters
         public static final double inPerTick = 0.023278;
-        public static double tps = 900;
+        public static double tps = 1000;//900
         public double lateralInPerTick = inPerTick;
         public double trackWidth = 14;
 
@@ -195,7 +195,6 @@ public final class MecanumDrive {
 
         // --- SHOOTER & INTAKE CONFIGURATION ---
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
-        shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25);//P = 550 F = 25
 
         intakeServo.setDirection(DcMotorSimple.Direction.REVERSE);
         intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -317,8 +316,13 @@ public final class MecanumDrive {
     }
 
     // --- SHOOTER ACTIONS ---
-    public Action shooterOn() {
-        return new InstantAction(() -> shooter_1.setVelocity(Params.tps));
+    public Action shooterStraightOn() {
+        shooter_1.setVelocityPIDFCoefficients(65, 0.0, 0.0, 10);
+        return new InstantAction(() -> shooter_1.setVelocity(1000));
+    }
+    public Action shooterGoalOn() {
+        shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15);
+        return new InstantAction(() -> shooter_1.setVelocity(900));
     }
     public Action transferOn() {
         return new InstantAction(() -> {
@@ -327,11 +331,17 @@ public final class MecanumDrive {
         });
     }
     public Action intakeOn() {
-        return new InstantAction(() -> intakeTransfer.setPower(0.7));
+        return new InstantAction(() -> {
+            intakeTransfer.setPower(0.6);
+            intakeServo.setPower(-0.1);
+        });
     }
 
     public Action intakeOff() {
-        return new InstantAction(() -> intakeTransfer.setPower(0));
+        return new InstantAction(() -> {
+            intakeTransfer.setPower(0);
+            intakeServo.setPower(0);
+        });
     }
     public Action stopAll() {
         return new InstantAction(() -> {

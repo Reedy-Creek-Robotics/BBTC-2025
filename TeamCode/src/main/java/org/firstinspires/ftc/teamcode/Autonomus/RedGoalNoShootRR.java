@@ -17,10 +17,10 @@ import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.moveOu
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMaxAngAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMaxAngVel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMinAngAccel;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad3_x_sign;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad3_y_sign;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad4_x_sign;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad4_y_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad1_x_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad1_y_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad2_x_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad2_y_sign;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.shootTimer;
 
 import com.acmerobotics.roadrunner.Action;
@@ -39,13 +39,13 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
 import java.util.Arrays;
 
-@Autonomous(name = "Blue Straight Shoot RR", group = "Autonomous")
-public class BlueStraightShootRR extends LinearOpMode {
+@Autonomous(name = "Red Goal No Shoot RR", group = "Autonomous")
+public class RedGoalNoShootRR extends LinearOpMode {
 
     @Override
     public void runOpMode() {
 
-        Pose2d setStartPose = new Pose2d((quad4_x_sign)*62,(quad4_y_sign)*12,Math.toRadians(180));
+        Pose2d setStartPose = new Pose2d((quad2_x_sign)*50.4,(quad2_y_sign)*50.3,Math.toRadians(-45));
         MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
 
         // Define Constraints
@@ -61,34 +61,17 @@ public class BlueStraightShootRR extends LinearOpMode {
         // Build Trajectory
         Action trajectory = drive.actionBuilder(setStartPose)
                 // setTangent(180) tells the robot to move toward the center of the field
+                .waitSeconds(22)
                 .setTangent(Math.toRadians(180))
-                .strafeTo(new Vector2d((quad4_x_sign)*(55),(quad4_y_sign)*(10)), fastVel, fastAccel)
-                .stopAndAdd(drive.shooterStraightOn())
-                .turn(Math.toRadians(-156), preciseTurn)
-                .waitSeconds(0.3)
-                .stopAndAdd(drive.transferOn())
-                .waitSeconds(shootTimer)
-                .stopAndAdd(drive.stopAll())
-                .turn(Math.toRadians(156), preciseTurn)
+                .strafeTo(new Vector2d((quad2_x_sign)*(ballShootX),(quad2_y_sign)*(ballShootY)), fastVel, fastAccel)
 
-                .strafeTo(new Vector2d((quad4_x_sign)*(36),(quad4_y_sign)*(10)))
-
-                .turn(Math.toRadians(90), preciseTurn)
-
-                .stopAndAdd(drive.intakeOn())
-                .strafeTo(new Vector2d((quad4_x_sign)*(35), (quad4_y_sign)*(55)), intakeVel, new ProfileAccelConstraint(intakeMinAccel, intakeMaxAccel))
-                .stopAndAdd(drive.intakeOff())
-
-                .strafeTo(new Vector2d((quad4_x_sign)*(55),(quad4_y_sign)*(10)), fastVel, fastAccel)
-
-                .stopAndAdd(drive.shooterStraightOn())
-                .turn(Math.toRadians(116), preciseTurn)
-                .waitSeconds(0.3)
+                .stopAndAdd(drive.shooterGoalOn())
+                .waitSeconds(1)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(shootTimer)
                 .stopAndAdd(drive.stopAll())
 
-                .strafeTo(new Vector2d((quad4_x_sign)*(43), (quad4_y_sign)*(23)))
+                .strafeTo(new Vector2d((quad1_x_sign)*(moveOutX), (quad1_y_sign)*(moveOutY)))
                 .build();
 
         Actions.runBlocking(trajectory);

@@ -6,7 +6,6 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.IMU;
 
 public abstract class BaseTeleOp extends LinearOpMode {
@@ -19,7 +18,6 @@ public abstract class BaseTeleOp extends LinearOpMode {
     private boolean intakeReverseOn = false; // Added missing declaration
     private boolean aWasPressed = false; // Added missing declaration
 
-    private boolean apriltagSeen = false;
     protected double limitedForward = 0, limitedRight = 0, limitedRotate = 0;
 
     private IMU imu;
@@ -34,22 +32,17 @@ public abstract class BaseTeleOp extends LinearOpMode {
     private boolean xWasPressed = false;
 
     private boolean servoOn = false;
-    //private boolean cameraOn = false;
     private boolean yWasPressed = false;
-    private boolean dpadUpWasPressed = false;
-    private boolean dpadDownWasPressed = false;
-    private boolean midShotOn = true;
+
     private boolean longShotOn = false;
-    private boolean manualShotOverrideOn = true;
-    private boolean cameraOn = false;
-    private double distance = -1;
-    private double tagID = -1;
+
+    private boolean shortShotOn = false;
 
     private double lastForward = 0;
     private double lastRight = 0;
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
-//    private static final double SERVO_START_TICKS = 1050;
+    private double tps = 0;
 
     public void initializeHardware() {
 
@@ -93,12 +86,6 @@ public abstract class BaseTeleOp extends LinearOpMode {
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
-        cameraOn = true;
-       // shooter_1.setVelocityPIDFCoefficients(P,0.0,0.5,F);
-        //PIDF values tuned for 1000 TPS and shooting distance of ~45inches
-       // shooter_1.setVelocityPIDFCoefficients(900, 0.0, 0.5, 25.5);//P = 550 F = 25 // older
-      //  shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
-        //shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=900 (mid shot)
         telemetry.addLine("Hardware initialized");
     }
 
@@ -157,15 +144,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
 
         drive(limitedForward, limitedRight, limitedRotate);
     }
-    protected void blueChannel(){
-        camera.switchToBlue();
-    }
-    protected void redChannel(){
-        camera.switchToRed();
-    }
-    protected void cameraStart(){
-        camera.startCamera();
-    }
+
     protected void handleMechanisms() {
         camera.update();
 
@@ -193,48 +172,42 @@ public abstract class BaseTeleOp extends LinearOpMode {
         }
         yWasPressed = gamepad1.y;
 
-        if (gamepad1.dpad_up && !dpadUpWasPressed) {
+        if (gamepad2.y) {
             longShotOn = !longShotOn;
+            shortShotOn = false;
         }
-        dpadUpWasPressed = gamepad1.dpad_up;
 
-        if (gamepad1.dpad_down && !dpadDownWasPressed) {
-            midShotOn = !midShotOn;
-        }
-        dpadDownWasPressed = gamepad1.dpad_down;
-
-        if(longShotOn){
-            shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
-        } else {
-            shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=1000 (mid shot)
+        if (gamepad2.a) {
+            shortShotOn = !shortShotOn;
+            longShotOn = false;
         }
 
         if (shooterOn) {
-            shooter_1.setVelocity(1000);//900
-            intakeServo.setPower(servoOn ? 1.0 : 0.0);
-            tagID = camera.getTid();
-            distance = camera.getDistance();
-            apriltagSeen = (distance > 0) ? true : false;
-            if (!manualShotOverrideOn) {
-                if (distance > 90) {
-                    shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.5, 25); //tps=1000 (longest shot)
-                } else if (distance < 90) {
-                    shooter_1.setVelocityPIDFCoefficients(40, 0.0, 0, 25); //tps=1000 (mid shot)
-                } else {
-                    apriltagSeen = false;
-                }
+            if (longShotOn){
+                shooter_1.setVelocityPIDFCoefficients(65, 0.0, 0.0, 10); //tps=1000 (longest shot)
+                tps = 1000;
+                telemetry.addLine("LONG SHOT ON");
+            } else if (shortShotOn) {
+                shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
+                tps = 900;
+                telemetry.addLine("SHORT SHOT ON");
+            } else {
+                shortShotOn = true;
+                shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 12); //tps=900 (mid shot)
+                tps = 900;
+                telemetry.addLine("SHORT SHOT ON");
             }
+            shooter_1.setVelocity(tps);
+            intakeServo.setPower(servoOn ? 1.0 : 0.0);
         } else {
             shooter_1.setVelocity(0);
             servoOn = false;
             yWasPressed = false;
-            apriltagSeen = false;
-            distance = 0;
-            tagID = 0;
             // FORCE intake OFF when shooter turns OFF
             if (lastShooterOn) {
                 intakeOn = false;
             }
+            telemetry.addLine("SHOOTER OFF");
         }
         lastShooterOn = shooterOn;
 
@@ -258,11 +231,6 @@ public abstract class BaseTeleOp extends LinearOpMode {
             intakeTransfer.setPower(0.0);
             intakeServo.setPower(0.0);
         }
-
-        telemetry.addData("Camera Active", cameraOn);
-        telemetry.addData("April Tag seen: ",apriltagSeen);
-        telemetry.addData("Distance", "%.2f", distance);
-        telemetry.addData("Tag ID", tagID);
 
         telemetry.update();
     }

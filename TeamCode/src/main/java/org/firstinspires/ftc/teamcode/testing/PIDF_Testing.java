@@ -18,9 +18,8 @@ public class PIDF_Testing extends OpMode {
     private DcMotor intakeTransfer;
     private CRServo servo;
 
-    private double HighVelocity = 900;
+    private double HighVelocity = 600;
 
-    private double LowVelocity = 1300;
 
     double F = 0;
     double P = 0;
@@ -52,7 +51,6 @@ public class PIDF_Testing extends OpMode {
     public void loop() {
         if (gamepad1.yWasPressed()) {
             if (curTargetVelocity == HighVelocity) {
-                curTargetVelocity = LowVelocity;
                 intakeTransfer.setPower(1);
                 servo.setPower(1);
             } else {

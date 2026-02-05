@@ -19,4 +19,13 @@ public final class RR_RobotConstants {
     public static final double preciseTurnMaxAngVel = 3.0;
     public static final double preciseTurnMinAngAccel = -2.0;
     public static final double preciseTurnMaxAngAccel = 2.0;
+    public static final double ballCollectStartX = 12;
+    public static final double ballCollectStartY = 12;
+    public static final double ballCollectEndX = 12;
+    public static final double ballCollectEndY = 52;
+    public static final double ballShootX = 12;
+    public static final double ballShootY = 12;
+    public static final double moveOutX = 5;
+    public static final double moveOutY = 22;
+    public static final double shootTimer = 3.5;
 }
