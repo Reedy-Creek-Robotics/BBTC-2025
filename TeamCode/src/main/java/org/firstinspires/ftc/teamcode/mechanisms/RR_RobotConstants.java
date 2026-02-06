@@ -22,7 +22,7 @@ public final class RR_RobotConstants {
     public static final double ballCollectStartX = 12;
     public static final double ballCollectStartY = 12;
     public static final double ballCollectEndX = 12;
-    public static final double ballCollectEndY = 52;
+    public static final double ballCollectEndY = 54;
     public static final double ballShootX = 12;
     public static final double ballShootY = 12;
     public static final double moveOutX = 5;

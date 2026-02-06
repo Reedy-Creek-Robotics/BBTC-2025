@@ -173,30 +173,29 @@ public abstract class BaseTeleOp extends LinearOpMode {
         yWasPressed = gamepad1.y;
 
         if (gamepad2.y) {
-            longShotOn = !longShotOn;
+            longShotOn = true;
             shortShotOn = false;
         }
 
         if (gamepad2.a) {
-            shortShotOn = !shortShotOn;
+            shortShotOn = true;
             longShotOn = false;
         }
 
+        if (longShotOn){
+            shooter_1.setVelocityPIDFCoefficients(65, 0.0, 0.0, 10); //tps=1000 (longest shot)
+            tps = 1000;
+            telemetry.addLine("LONG SHOT ON");
+        } else if (shortShotOn) {
+            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
+            tps = 900;
+            telemetry.addLine("SHORT SHOT ON");
+        } else { // default
+            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
+            tps = 900;
+        }
+
         if (shooterOn) {
-            if (longShotOn){
-                shooter_1.setVelocityPIDFCoefficients(65, 0.0, 0.0, 10); //tps=1000 (longest shot)
-                tps = 1000;
-                telemetry.addLine("LONG SHOT ON");
-            } else if (shortShotOn) {
-                shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
-                tps = 900;
-                telemetry.addLine("SHORT SHOT ON");
-            } else {
-                shortShotOn = true;
-                shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 12); //tps=900 (mid shot)
-                tps = 900;
-                telemetry.addLine("SHORT SHOT ON");
-            }
             shooter_1.setVelocity(tps);
             intakeServo.setPower(servoOn ? 1.0 : 0.0);
         } else {
@@ -206,8 +205,10 @@ public abstract class BaseTeleOp extends LinearOpMode {
             // FORCE intake OFF when shooter turns OFF
             if (lastShooterOn) {
                 intakeOn = false;
+                shortShotOn = false;
+                longShotOn = false;
+                telemetry.addLine("SHOOTER OFF");
             }
-            telemetry.addLine("SHOOTER OFF");
         }
         lastShooterOn = shooterOn;
 

@@ -61,7 +61,7 @@ public class RedStraightNoShootRR extends LinearOpMode {
                 .stopAndAdd(drive.stopAll())
                 .turn(Math.toRadians(-156), preciseTurn)
 
-                .strafeTo(new Vector2d((quad1_x_sign)*(43), (quad1_y_sign)*(23)))
+                .strafeTo(new Vector2d((quad1_x_sign)*(55), (quad1_y_sign)*(36)))
                 .build();
 
         Actions.runBlocking(trajectory);

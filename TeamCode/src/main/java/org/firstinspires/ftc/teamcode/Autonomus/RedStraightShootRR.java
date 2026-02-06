@@ -77,14 +77,14 @@ public class RedStraightShootRR extends LinearOpMode {
 
                 .turn(Math.toRadians(-90), preciseTurn)
 
-                .stopAndAdd(drive.intakeOn())
-                .strafeTo(new Vector2d((quad1_x_sign)*(35), (quad1_y_sign)*(56)), intakeVel, new ProfileAccelConstraint(intakeMinAccel, intakeMaxAccel))
+                .stopAndAdd(drive.intakeSSOn())
+                .strafeTo(new Vector2d((quad1_x_sign)*(35), (quad1_y_sign)*(58)), intakeVel, new ProfileAccelConstraint(intakeMinAccel, intakeMaxAccel))
                 .stopAndAdd(drive.intakeOff())
 
                 .strafeTo(new Vector2d((quad1_x_sign)*(55),(quad1_y_sign)*(10)), fastVel, fastAccel)
 
                 .stopAndAdd(drive.shooterStraightOn())
-                .turn(Math.toRadians(-116), preciseTurn)
+                .turn(Math.toRadians(-111), preciseTurn)
                 .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(shootTimer)

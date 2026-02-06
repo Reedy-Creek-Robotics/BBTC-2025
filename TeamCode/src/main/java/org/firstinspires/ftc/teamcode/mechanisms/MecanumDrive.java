@@ -321,7 +321,7 @@ public final class MecanumDrive {
         return new InstantAction(() -> shooter_1.setVelocity(1000));
     }
     public Action shooterGoalOn() {
-        shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15);
+        shooter_1.setVelocityPIDFCoefficients(30, 0.0, 0.25, 14.5);
         return new InstantAction(() -> shooter_1.setVelocity(900));
     }
     public Action transferOn() {
@@ -333,7 +333,13 @@ public final class MecanumDrive {
     public Action intakeOn() {
         return new InstantAction(() -> {
             intakeTransfer.setPower(0.6);
-            intakeServo.setPower(-0.1);
+            intakeServo.setPower(-0.2);
+        });
+    }
+    public Action intakeSSOn() {
+        return new InstantAction(() -> {
+            intakeTransfer.setPower(0.5);
+            intakeServo.setPower(-0.3);
         });
     }
 

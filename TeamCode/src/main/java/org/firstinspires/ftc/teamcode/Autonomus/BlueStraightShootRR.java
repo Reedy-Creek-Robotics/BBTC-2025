@@ -75,14 +75,14 @@ public class BlueStraightShootRR extends LinearOpMode {
 
                 .turn(Math.toRadians(90), preciseTurn)
 
-                .stopAndAdd(drive.intakeOn())
-                .strafeTo(new Vector2d((quad4_x_sign)*(35), (quad4_y_sign)*(55)), intakeVel, new ProfileAccelConstraint(intakeMinAccel, intakeMaxAccel))
+                .stopAndAdd(drive.intakeSSOn())
+                .strafeTo(new Vector2d((quad4_x_sign)*(35), (quad4_y_sign)*(58)), intakeVel, new ProfileAccelConstraint(intakeMinAccel, intakeMaxAccel))
                 .stopAndAdd(drive.intakeOff())
 
                 .strafeTo(new Vector2d((quad4_x_sign)*(55),(quad4_y_sign)*(10)), fastVel, fastAccel)
 
                 .stopAndAdd(drive.shooterStraightOn())
-                .turn(Math.toRadians(116), preciseTurn)
+                .turn(Math.toRadians(111), preciseTurn)
                 .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(shootTimer)

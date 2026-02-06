@@ -45,7 +45,7 @@ public class BlueGoalNoShootRR extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d setStartPose = new Pose2d((quad3_x_sign)*50.4,(quad3_x_sign)*50.3,Math.toRadians(45));
+        Pose2d setStartPose = new Pose2d((quad3_x_sign)*47,(quad3_x_sign)*47,Math.toRadians(45));
         MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
 
         // Define Constraints
