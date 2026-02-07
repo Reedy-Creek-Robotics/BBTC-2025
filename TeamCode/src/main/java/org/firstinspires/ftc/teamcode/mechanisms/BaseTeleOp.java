@@ -28,6 +28,8 @@ public abstract class BaseTeleOp extends LinearOpMode {
     private boolean lastShooterOn = false;
     private boolean bWasPressed = false;
 
+    private boolean EmergencyShootOn = false;
+
     private boolean intakeOn = false;
     private boolean xWasPressed = false;
 
@@ -171,15 +173,22 @@ public abstract class BaseTeleOp extends LinearOpMode {
             servoOn = !servoOn;
         }
         yWasPressed = gamepad1.y;
+        if(gamepad2.b){
+            longShotOn = false;
+            shortShotOn = false;
+            EmergencyShootOn = true;
+        }
 
         if (gamepad2.y) {
             longShotOn = true;
             shortShotOn = false;
+            EmergencyShootOn = false;
         }
 
         if (gamepad2.a) {
             shortShotOn = true;
             longShotOn = false;
+            EmergencyShootOn = false;
         }
 
         if (longShotOn){
@@ -190,7 +199,11 @@ public abstract class BaseTeleOp extends LinearOpMode {
             shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
             tps = 900;
             telemetry.addLine("SHORT SHOT ON");
-        } else { // default
+        } else if (EmergencyShootOn){
+            shooter_1.setVelocityPIDFCoefficients(80,0,0,20);
+            tps = 1000;
+            telemetry.addLine("Emergency Long Shot On");
+        }else { // default
             shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
             tps = 900;
         }
