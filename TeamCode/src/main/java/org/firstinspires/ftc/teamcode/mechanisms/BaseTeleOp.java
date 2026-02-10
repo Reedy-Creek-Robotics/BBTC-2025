@@ -196,7 +196,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
             tps = 1000;
             telemetry.addLine("LONG SHOT ON");
         } else if (shortShotOn) {
-            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
+            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 14.25); //tps=900 (short shot) F was 15 previously
             tps = 900;
             telemetry.addLine("SHORT SHOT ON");
         } else if (EmergencyShootOn){
