@@ -47,7 +47,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive {
+public final class MecanumDriveClose {
     public static class Params {
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
                 RevHubOrientationOnRobot.LogoFacingDirection.UP;
@@ -55,10 +55,10 @@ public final class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.LEFT;
 
         // Drive model parameters
-        public static final double inPerTick = 0.023278;
+        public static final double inPerTick = 0.08503 ;// 0.08503
         public static double tps = 1000;//900
         public double lateralInPerTick = inPerTick;
-        public double trackWidth = 14;
+        public double trackWidth = 20;//14
 
         // Feedforward parameters
         public double kS = 0.12;
@@ -66,7 +66,7 @@ public final class MecanumDrive {
         public double kA = 0;
 
         // Constraints
-        public double maxWheelVel = 75;
+        public double maxWheelVel = 25;
         public double minProfileAccel = -25;
         public double maxProfileAccel = 30;
         public double maxAngVel = 5;
@@ -75,7 +75,7 @@ public final class MecanumDrive {
         // Gains
         public double axialGain = 1.8;
         public double lateralGain = 1.5;
-        public double headingGain = 3.8;
+        public double headingGain = 6.8;
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;
@@ -97,6 +97,7 @@ public final class MecanumDrive {
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
     public final DcMotorEx leftFront, leftBack, rightBack, rightFront, shooter_1, intakeTransfer;
+
     public final CRServo intakeServo;
     public final VoltageSensor voltageSensor;
     public final LazyImu lazyImu;
@@ -112,14 +113,14 @@ public final class MecanumDrive {
         private Pose2d pose;
 
         public DriveLocalizer(Pose2d pose) {
-            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(MecanumDriveClose.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(MecanumDriveClose.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(MecanumDriveClose.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(MecanumDriveClose.this.rightFront));
 
             // Matching encoder direction to motor direction for forward = positive
-            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
+            leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
 
             imu = lazyImu.get();
             this.pose = pose;
@@ -167,7 +168,7 @@ public final class MecanumDrive {
         }
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
+    public MecanumDriveClose(HardwareMap hardwareMap, Pose2d pose) {
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
@@ -183,10 +184,10 @@ public final class MecanumDrive {
         intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
 
         // Drive Motor Directions
-        leftFront.setDirection(DcMotor.Direction.REVERSE);
-        leftBack.setDirection(DcMotor.Direction.REVERSE);
-        rightFront.setDirection(DcMotor.Direction.FORWARD);
-        rightBack.setDirection(DcMotor.Direction.FORWARD);
+        leftFront.setDirection(DcMotor.Direction.FORWARD);
+        leftBack.setDirection(DcMotor.Direction.FORWARD);
+        rightFront.setDirection(DcMotor.Direction.REVERSE);
+        rightBack.setDirection(DcMotor.Direction.REVERSE);
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -317,11 +318,11 @@ public final class MecanumDrive {
 
     // --- SHOOTER ACTIONS ---
     public Action shooterStraightOn() {
-        shooter_1.setVelocityPIDFCoefficients(65, 0.0, 0.0, 9.5);
+        shooter_1.setVelocityPIDFCoefficients(65, 0.0, 0.0, 6.5);
         return new InstantAction(() -> shooter_1.setVelocity(1000));
     }
     public Action shooterGoalOn() {
-        shooter_1.setVelocityPIDFCoefficients(30, 0.0, 0.25, 14.5);
+        shooter_1.setVelocityPIDFCoefficients(30, 0.0, 0.25, 10.5);
         return new InstantAction(() -> shooter_1.setVelocity(900));
     }
     public Action transferOn() {
@@ -338,7 +339,7 @@ public final class MecanumDrive {
     }
     public Action intakeSSOn() {
         return new InstantAction(() -> {
-            intakeTransfer.setPower(0.5);
+            intakeTransfer.setPower(1);
             intakeServo.setPower(-0.4);
         });
     }

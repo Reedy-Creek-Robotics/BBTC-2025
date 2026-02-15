@@ -1,16 +1,10 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballCollectEndX;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballCollectEndY;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballCollectStartX;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballCollectStartY;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballShootX;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballShootY;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.fastAccelMaxAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.fastAccelMinAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.fastVelMinTransVel;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.intakeMaxAccel;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.intakeMinAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.intakeVelMinTransVel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.moveOutX;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.moveOutY;
@@ -33,12 +27,13 @@ import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
+import org.firstinspires.ftc.teamcode.mechanisms.MecanumDriveClose;
 
 import java.util.Arrays;
-
+@Disabled
 @Autonomous(name = "Red Goal No Shoot RR", group = "Autonomous")
 public class RedGoalNoShootRR extends LinearOpMode {
 
@@ -46,7 +41,7 @@ public class RedGoalNoShootRR extends LinearOpMode {
     public void runOpMode() {
 
         Pose2d setStartPose = new Pose2d((quad2_x_sign)*47,(quad2_y_sign)*47,Math.toRadians(-45));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
+        MecanumDriveClose drive = new MecanumDriveClose(hardwareMap, setStartPose);
 
         // Define Constraints
         MinVelConstraint intakeVel = new MinVelConstraint(Arrays.asList(

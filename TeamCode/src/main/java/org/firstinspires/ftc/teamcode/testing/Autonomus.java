@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 @Disabled
-@Autonomous(name = "Autonomous motor testing")
+@Autonomous(name = "Autonomous testing")
 public class Autonomus extends LinearOpMode {
 
     // Drive motors
@@ -36,7 +36,6 @@ public class Autonomus extends LinearOpMode {
     private static final double SHOOTER_FULL_POWER = 0.5;
     private static final double SHOOTER_HALF_POWER = 0.3;
     private static final double TRANSFER_POWER = 0.4;
-
     @Override
     public void runOpMode() {
 
@@ -53,13 +52,10 @@ public class Autonomus extends LinearOpMode {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        // 1) Move forward 50 inches while intake is ON
-       intakeTransfer.setPower(1);
-       sleep(5000);
-       shooter_1.setPower(0.5);
-       sleep(5000);
-       intakeTransfer.setPower(0);
-       shooter_1.setPower(0);
+        moveForward(25,0.9);
+        sleep(1000);
+        moveForward(-25,0.9);
+        sleep(1000);
     }
 
     // ============================================================

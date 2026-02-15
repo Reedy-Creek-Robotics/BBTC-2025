@@ -1,14 +1,17 @@
 package org.firstinspires.ftc.teamcode.testing;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
-@Disabled
+//@Disabled
 @TeleOp(name = "AprilTag Pose Tracking", group = "Testing")
 public class Camera_Testing extends LinearOpMode {
 
@@ -22,6 +25,8 @@ public class Camera_Testing extends LinearOpMode {
                 .setDrawAxes(true)
                 .setDrawTagID(true)
                 .build();
+
+
 
         // Initialize the portal
         visionPortal = new VisionPortal.Builder()
@@ -39,24 +44,22 @@ public class Camera_Testing extends LinearOpMode {
 
             if (currentDetections.size() > 0) {
                 for (AprilTagDetection detection : currentDetections) {
-                    // Check if pose data is available (it might be null if tag is partially obscured)
                     if (detection.ftcPose != null) {
+                        // Calculate Area: (Right - Left) * (Bottom - Top)
+                        double tagWidth = detection.corners[1].x - detection.corners[0].x;
+                        double tagHeight = detection.corners[2].y - detection.corners[0].y;
+                        double area = Math.abs(tagWidth * tagHeight);
+
                         telemetry.addLine(String.format("--- Tag ID %d ---", detection.id));
-                        telemetry.addData("Distance (Range)", "%.2f in", detection.ftcPose.range);
-                        telemetry.addData("X Offset (Lateral)", "%.2f in", detection.ftcPose.x);
-                        telemetry.addData("Y Offset (Forward)", "%.2f in", detection.ftcPose.y);
-                        telemetry.addData("Z Offset (Height)", "%.2f in", detection.ftcPose.z);
-                        telemetry.addData("Yaw (Angle)", "%.2f deg", detection.ftcPose.yaw);
-                    } else {
-                        telemetry.addLine(String.format("Tag ID %d detected, but pose is unavailable", detection.id));
+                        telemetry.addData("Area", "%.2f px^2", area); // Area in pixels
+                        telemetry.addData("Distance", "%.2f in", detection.ftcPose.range);
+                        //telemetry.addData("Yaw", "%.2f deg", detection.ftcPose.yaw);
                     }
                 }
             } else {
                 telemetry.addLine("No tags detected");
             }
-
             telemetry.update();
-            sleep(20); // Small delay to prevent telemetry spam
         }
     }
 }

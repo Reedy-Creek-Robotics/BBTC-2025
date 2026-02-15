@@ -9,9 +9,11 @@ public class TeleOp extends BaseTeleOp {
         waitForStart();
 
         while (opModeIsActive()) {
-            handleDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x);
+            handleDrive(gamepad1.left_stick_y, -gamepad1.left_stick_x);
             handleMechanisms();
             telemetry.update();
+            telemetry.addData("dist: ",camera.getDistance());
+            telemetry.addData("area: ",camera.getArea());
         }
     }
 }

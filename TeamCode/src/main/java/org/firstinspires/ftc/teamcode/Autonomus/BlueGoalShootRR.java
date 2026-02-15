@@ -33,12 +33,13 @@ import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
+import org.firstinspires.ftc.teamcode.mechanisms.MecanumDriveClose;
 
 import java.util.Arrays;
-
+@Disabled
 @Autonomous(name = "Blue Goal Shoot RR", group = "Autonomous")
 public class BlueGoalShootRR extends LinearOpMode {
 
@@ -46,7 +47,7 @@ public class BlueGoalShootRR extends LinearOpMode {
     public void runOpMode() {
 
         Pose2d setStartPose = new Pose2d((quad3_x_sign)*47,(quad3_x_sign)*47,Math.toRadians(45));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
+        MecanumDriveClose drive = new MecanumDriveClose(hardwareMap, setStartPose);
 
         // Define Constraints
         MinVelConstraint intakeVel = new MinVelConstraint(Arrays.asList(

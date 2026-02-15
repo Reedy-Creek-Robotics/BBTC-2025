@@ -27,5 +27,5 @@ public final class RR_RobotConstants {
     public static final double ballShootY = 12;
     public static final double moveOutX = 5;
     public static final double moveOutY = 22;
-    public static final double shootTimer = 3.5;
+    public static final double shootTimer = 5;//3.5
 }

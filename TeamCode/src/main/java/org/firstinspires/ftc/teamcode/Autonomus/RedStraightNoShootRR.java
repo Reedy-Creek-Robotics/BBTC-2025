@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode.Autonomus;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.fastAccelMaxAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.fastAccelMinAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.fastVelMinTransVel;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.intakeMaxAccel;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.intakeMinAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.intakeVelMinTransVel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMaxAngAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMaxAngVel;
@@ -23,12 +21,13 @@ import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
+import org.firstinspires.ftc.teamcode.mechanisms.MecanumDriveClose;
 
 import java.util.Arrays;
-
+@Disabled
 @Autonomous(name = "Red Straight No Shoot RR", group = "Autonomous")
 public class RedStraightNoShootRR extends LinearOpMode {
 
@@ -36,7 +35,7 @@ public class RedStraightNoShootRR extends LinearOpMode {
     public void runOpMode() {
 
         Pose2d setStartPose = new Pose2d((quad1_x_sign)*62,(quad1_y_sign)*12,Math.toRadians(180));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
+        MecanumDriveClose drive = new MecanumDriveClose(hardwareMap, setStartPose);
 
         // Define Constraints
         MinVelConstraint intakeVel = new MinVelConstraint(Arrays.asList(

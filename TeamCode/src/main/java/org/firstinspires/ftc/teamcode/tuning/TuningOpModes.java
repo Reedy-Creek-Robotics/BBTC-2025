@@ -25,7 +25,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
-import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
+import org.firstinspires.ftc.teamcode.mechanisms.MecanumDriveClose;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,7 +33,7 @@ import java.util.List;
 @Disabled
 public final class TuningOpModes {
     // Set this to your MecanumDrive class
-    public static final Class<?> DRIVE_CLASS = MecanumDrive.class;
+    public static final Class<?> DRIVE_CLASS = MecanumDriveClose.class;
 
     public static final String GROUP = "quickstart";
     public static final boolean DISABLED = false;
@@ -53,9 +53,9 @@ public final class TuningOpModes {
         if (DISABLED) return;
 
         DriveViewFactory dvf;
-        if (DRIVE_CLASS.equals(MecanumDrive.class)) {
+        if (DRIVE_CLASS.equals(MecanumDriveClose.class)) {
             dvf = hardwareMap -> {
-                MecanumDrive md = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+                MecanumDriveClose md = new MecanumDriveClose(hardwareMap, new Pose2d(0, 0, 0));
 
                 // Use the standard Control Hub IMU
                 LazyImu lazyImu = md.lazyImu;
@@ -64,8 +64,8 @@ public final class TuningOpModes {
                 List<EncoderRef> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
 
                 // Logic for Built-in Motor Encoders
-                if (md.localizer instanceof MecanumDrive.DriveLocalizer) {
-                    MecanumDrive.DriveLocalizer dl = (MecanumDrive.DriveLocalizer) md.localizer;
+                if (md.localizer instanceof MecanumDriveClose.DriveLocalizer) {
+                    MecanumDriveClose.DriveLocalizer dl = (MecanumDriveClose.DriveLocalizer) md.localizer;
 
                     // Group all 4 drive motor encoders together
                     encoderGroups.add(new LynxQuadratureEncoderGroup(
@@ -84,10 +84,10 @@ public final class TuningOpModes {
 
                 return new DriveView(
                         DriveType.MECANUM,
-                        MecanumDrive.PARAMS.inPerTick,
-                        MecanumDrive.PARAMS.maxWheelVel,
-                        MecanumDrive.PARAMS.minProfileAccel,
-                        MecanumDrive.PARAMS.maxProfileAccel,
+                        MecanumDriveClose.PARAMS.inPerTick,
+                        MecanumDriveClose.PARAMS.maxWheelVel,
+                        MecanumDriveClose.PARAMS.minProfileAccel,
+                        MecanumDriveClose.PARAMS.maxProfileAccel,
                         encoderGroups,
                         Arrays.asList(md.leftFront, md.leftBack),
                         Arrays.asList(md.rightFront, md.rightBack),
@@ -97,9 +97,9 @@ public final class TuningOpModes {
                         new ArrayList<>(), // No Perpendicular Dead Wheels
                         lazyImu,
                         md.voltageSensor,
-                        () -> new MotorFeedforward(MecanumDrive.PARAMS.kS,
-                                MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
-                                MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick),
+                        () -> new MotorFeedforward(MecanumDriveClose.PARAMS.kS,
+                                MecanumDriveClose.PARAMS.kV / MecanumDriveClose.PARAMS.inPerTick,
+                                MecanumDriveClose.PARAMS.kA / MecanumDriveClose.PARAMS.inPerTick),
                         0
                 );
             };

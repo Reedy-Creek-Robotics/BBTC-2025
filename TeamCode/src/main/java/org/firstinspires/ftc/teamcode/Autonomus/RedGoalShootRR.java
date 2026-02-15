@@ -21,6 +21,8 @@ import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad1_
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad1_y_sign;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad2_x_sign;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad2_y_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad4_x_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad4_y_sign;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.shootTimer;
 
 import com.acmerobotics.roadrunner.Action;
@@ -33,12 +35,13 @@ import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
+import org.firstinspires.ftc.teamcode.mechanisms.MecanumDriveClose;
 
 import java.util.Arrays;
-
+@Disabled
 @Autonomous(name = "Red Goal Shoot RR", group = "Autonomous")
 public class RedGoalShootRR extends LinearOpMode {
 
@@ -46,7 +49,7 @@ public class RedGoalShootRR extends LinearOpMode {
     public void runOpMode() {
 
         Pose2d setStartPose = new Pose2d((quad2_x_sign)*47,(quad2_y_sign)*47,Math.toRadians(-45));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, setStartPose);
+        MecanumDriveClose drive = new MecanumDriveClose(hardwareMap, setStartPose);
 
         // Define Constraints
         MinVelConstraint intakeVel = new MinVelConstraint(Arrays.asList(
@@ -85,6 +88,46 @@ public class RedGoalShootRR extends LinearOpMode {
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(shootTimer)
                 .stopAndAdd(drive.stopAll())
+
+
+
+
+
+
+
+
+                .strafeTo(new Vector2d((quad1_x_sign)*(12),(quad1_y_sign)*(10)))
+                .stopAndAdd(drive.intakeSSOn())
+                //.turn(Math.toRadians(90))
+                .strafeTo(new Vector2d((quad1_x_sign)*(12),(quad1_y_sign)*(56)))
+                .stopAndAdd(drive.intakeOff())
+                .strafeTo(new Vector2d((quad1_x_sign)*(ballShootX),(quad1_y_sign)*(ballShootY)))
+                .turn(Math.toRadians(-135))
+                .waitSeconds(0.3)
+                .stopAndAdd(drive.transferOn())
+                .waitSeconds(shootTimer)
+                .stopAndAdd(drive.stopAll())
+
+                .turn(Math.toRadians(135))
+
+                .strafeTo(new Vector2d((quad2_x_sign)*(12),(quad2_y_sign)*(10)))
+                // .turn(Math.toRadians(90))
+                .stopAndAdd(drive.intakeSSOn())
+                .strafeTo(new Vector2d((quad2_x_sign)*(12),(quad2_y_sign)*(56)))
+                .stopAndAdd(drive.intakeOff())
+
+                .strafeTo(new Vector2d((quad1_x_sign)*(ballShootX),(quad1_y_sign)*(ballShootY)))
+                .turn(Math.toRadians(-135))
+                .waitSeconds(0.3)
+                .stopAndAdd(drive.transferOn())
+                .waitSeconds(shootTimer)
+                .stopAndAdd(drive.stopAll())
+
+
+                .strafeTo(new Vector2d((quad4_x_sign)*(moveOutX), (quad4_y_sign)*(moveOutY)))
+
+                //
+
 
                 .strafeTo(new Vector2d((quad1_x_sign)*(moveOutX), (quad1_y_sign)*(moveOutY)))
                 .build();

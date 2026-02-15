@@ -5,14 +5,14 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
+import org.firstinspires.ftc.teamcode.mechanisms.MecanumDriveClose;
 @Disabled
 @TeleOp(name = "Manual Track Width Calibrator", group = "Testing")
 public class TrackWidthCalibration extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // Initialize drive with your current pose
-        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        MecanumDriveClose drive = new MecanumDriveClose(hardwareMap, new Pose2d(0, 0, 0));
 
         telemetry.addLine("1. Align robot with a field tile line.");
         telemetry.addLine("2. Press START.");

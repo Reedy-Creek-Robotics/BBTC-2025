@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
 //RIGHT ONE
-@Disabled
+
 @Autonomous(name = "Auto : Red Straight Shoot")
 public class AutonomusStraightRedShoot extends BaseAutonomus {
 
@@ -27,39 +27,36 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
         // AUTONOMOUS STEPS
         // -------------------------------
 
-        moveForward((72+HALF_OF_BOT_LENGTH), DRIVE_SPEED);
-        shooter_1.setVelocity(SHOOTER_TPS);
-        rotate(-147,TURN_SPEED);
-        sleep(1000);
+        farShot();
+        moveForward(-9,DRIVE_SPEED);
+        rotate(30,DRIVE_SPEED);
+        sleep(100);
         intakeServo.setPower(1);
-        sleep(500);
         intakeTransfer.setPower(1);
-        sleep(4500);
+        sleep(2500);
         stopShootSequence();
-        sleep(100);
 
-        moveForward(8, DRIVE_SPEED);
-        rotate(-147, TURN_SPEED);
-        sleep(100);
-        intakeTransfer.setPower(1.0);
 
-        moveForward((44),0.23);
+        moveForward(-(10+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
         sleep(100);
-        intakeTransfer.setPower(0.0);
-
-        moveForward((-44), DRIVE_SPEED);
-        rotate(147, TURN_SPEED);
-        shooter_1.setVelocity(SHOOTER_TPS);
-        moveForward(-12, DRIVE_SPEED);
-        sleep(100);
-        intakeServo.setPower(1.0);
-        sleep(500);
+        rotate(-115,DRIVE_SPEED);
         intakeTransfer.setPower(0.8);
-        sleep(4500);
+        intakeServo.setPower(-0.8);
+        moveForward(43,0.35);
+        sleep(100);
+        intakeTransfer.setPower(0);
+        intakeServo.setPower(0);
+        moveForward(-43,DRIVE_SPEED);
+        rotate(115,DRIVE_SPEED);
+        sleep(100);
+        farShot();
+        moveForward((10+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
 
-        rotate(-90, TURN_SPEED);
-        moveForward(15, DRIVE_SPEED);
+        intakeServo.setPower(1);
+        intakeTransfer.setPower(1);
+        sleep(2500);
 
+        moveForward(-10,DRIVE_SPEED);
         // End
         stopAll();
     }

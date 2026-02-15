@@ -14,6 +14,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
     protected DcMotorEx shooter_1, intakeTransfer;
     protected CRServo intakeServo;
 
+
     protected Camera camera;
     private boolean intakeReverseOn = false; // Added missing declaration
     private boolean aWasPressed = false; // Added missing declaration
@@ -37,11 +38,13 @@ public abstract class BaseTeleOp extends LinearOpMode {
     private boolean yWasPressed = false;
 
     private boolean longShotOn = false;
+    private boolean midShotOn = false;
 
     private boolean shortShotOn = false;
 
     private double lastForward = 0;
     private double lastRight = 0;
+    private double dist = 0;
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
     private double tps = 0;
@@ -58,6 +61,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
 
         intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
         intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
+
 
         flmotor.setDirection(DcMotor.Direction.REVERSE);
         blmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -83,7 +87,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
         intakeTransfer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         intakeServo.setPower(0.0);
-
+        camera.update();
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
@@ -116,7 +120,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
     }
 
     protected void handleDrive(double forward, double right) {
-        double rotate = gamepad1.right_stick_x;
+        double rotate = -gamepad1.right_stick_x;
         long now = System.currentTimeMillis();
 
         boolean forwardReversal =
@@ -173,38 +177,53 @@ public abstract class BaseTeleOp extends LinearOpMode {
             servoOn = !servoOn;
         }
         yWasPressed = gamepad1.y;
+
         if(gamepad2.b){
             longShotOn = false;
+            midShotOn = false;
             shortShotOn = false;
             EmergencyShootOn = true;
         }
 
         if (gamepad2.y) {
             longShotOn = true;
+            midShotOn = false;
+            shortShotOn = false;
+            EmergencyShootOn = false;
+        }
+
+        if (gamepad2.x) {
+            longShotOn = false;
+            midShotOn = true;
             shortShotOn = false;
             EmergencyShootOn = false;
         }
 
         if (gamepad2.a) {
             shortShotOn = true;
+            midShotOn = false;
             longShotOn = false;
             EmergencyShootOn = false;
         }
 
         if (longShotOn){
-            shooter_1.setVelocityPIDFCoefficients(65, 0.0, 0.0, 10); //tps=1000 (longest shot)
+            shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.0, 6.5);// Long shot
             tps = 1000;
             telemetry.addLine("LONG SHOT ON");
         } else if (shortShotOn) {
-            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 14.25); //tps=900 (short shot) F was 15 previously
+            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 10.5);// Short shot
             tps = 900;
             telemetry.addLine("SHORT SHOT ON");
+        } else if (midShotOn){
+            shooter_1.setVelocityPIDFCoefficients(28,0,0,13);// Mid shot
+            tps = 900;
+            telemetry.addLine("MID SHOT ON");
         } else if (EmergencyShootOn){
-            shooter_1.setVelocityPIDFCoefficients(80,0,0,20);
+            shooter_1.setVelocityPIDFCoefficients(80,0,0,20);// Emergency Long shot
             tps = 1000;
             telemetry.addLine("Emergency Long Shot On");
         }else { // default
-            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 15); //tps=900 (short shot)
+            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 10.5);// (short shot)
             tps = 900;
         }
 
@@ -219,7 +238,9 @@ public abstract class BaseTeleOp extends LinearOpMode {
             if (lastShooterOn) {
                 intakeOn = false;
                 shortShotOn = false;
+                midShotOn = false;
                 longShotOn = false;
+                EmergencyShootOn = false;
                 telemetry.addLine("SHOOTER OFF");
             }
         }
@@ -244,6 +265,24 @@ public abstract class BaseTeleOp extends LinearOpMode {
         else {
             intakeTransfer.setPower(0.0);
             intakeServo.setPower(0.0);
+        }
+
+        if (shooterOn && (camera.getTid() == 20 || camera.getTid() == 24)) {
+            dist = camera.getDistance();
+            telemetry.addData("dist : ",dist);
+            if (dist >= 120) {
+                if (longShotOn) {
+                    telemetry.addLine("LL agrees");
+                }
+            } else if (dist <= 60) {
+                if (shortShotOn) {
+                    telemetry.addLine("LL agrees");
+                }
+            } else if (dist > 60 && dist < 120) {
+                if (midShotOn) {
+                    telemetry.addLine("LL agrees");
+                }
+            }
         }
 
         telemetry.update();
