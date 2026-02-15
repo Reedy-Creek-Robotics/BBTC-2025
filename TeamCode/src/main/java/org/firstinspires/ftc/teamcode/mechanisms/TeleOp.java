@@ -12,8 +12,8 @@ public class TeleOp extends BaseTeleOp {
             handleDrive(gamepad1.left_stick_y, -gamepad1.left_stick_x);
             handleMechanisms();
             telemetry.update();
-            telemetry.addData("dist: ",camera.getDistance());
-            telemetry.addData("area: ",camera.getArea());
+            //telemetry.addData("dist: ",camera.getDistance());
+            //telemetry.addData("area: ",camera.getArea());
         }
     }
 }

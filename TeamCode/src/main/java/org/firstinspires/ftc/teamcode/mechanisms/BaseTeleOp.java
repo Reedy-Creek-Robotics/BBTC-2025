@@ -44,7 +44,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
 
     private double lastForward = 0;
     private double lastRight = 0;
-    private double dist = 0;
+    //private double dist = 0;
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
     private double tps = 0;
@@ -267,7 +267,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
             intakeServo.setPower(0.0);
         }
 
-        if (shooterOn && (camera.getTid() == 20 || camera.getTid() == 24)) {
+        /*if (shooterOn && (camera.getTid() == 20 || camera.getTid() == 24)) {
             dist = camera.getDistance();
             telemetry.addData("dist : ",dist);
             if (dist >= 120) {
@@ -283,7 +283,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
                     telemetry.addLine("LL agrees");
                 }
             }
-        }
+        }*/
 
         telemetry.update();
     }
