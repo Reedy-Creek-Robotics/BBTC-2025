@@ -54,7 +54,7 @@ public class AutonomusBlueGoal extends BaseAutonomus {
         shooter_1.setPower(0);
         stopShootSequence();
 
-        rotate(70,DRIVE_SPEED);
+        rotate(55,DRIVE_SPEED);
         moveForward((20+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
         rotate(90,DRIVE_SPEED);
         sleep(100);

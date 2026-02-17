@@ -55,19 +55,19 @@ public class AutonomusRedGoal extends BaseAutonomus {
         shooter_1.setPower(0);
         stopShootSequence();
 
-        rotate(-52,DRIVE_SPEED);
+        rotate(-55,DRIVE_SPEED);
         moveForward((18+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
-        rotate(-92,DRIVE_SPEED);
+        rotate(-90,DRIVE_SPEED);
         sleep(100);
         intakeTransfer.setPower(0.7);
         intakeServo.setPower(-0.8);
-        moveForward(45,0.35);
+        moveForward(43,0.35);
         sleep(100);
         intakeTransfer.setPower(0);
         intakeServo.setPower(0);
 
 
-        moveForward(-50,DRIVE_SPEED);
+        moveForward(-48,DRIVE_SPEED);
         rotate(92,DRIVE_SPEED);
         closeShot();
         moveForward(-(17+HALF_OF_BOT_LENGTH),DRIVE_SPEED);

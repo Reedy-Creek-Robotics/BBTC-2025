@@ -29,7 +29,7 @@ public class AutonomusStraightBlueShoot extends BaseAutonomus {
         // -------------------------------
         farShot();
         moveForward(-9,DRIVE_SPEED);
-        rotate(-30,DRIVE_SPEED);
+        rotate(-25,DRIVE_SPEED);
         sleep(100);
         intakeServo.setPower(1);
         intakeTransfer.setPower(1);
@@ -37,7 +37,7 @@ public class AutonomusStraightBlueShoot extends BaseAutonomus {
         stopShootSequence();
 
 
-        moveForward(-(10+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
+        moveForward(-(11+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
         sleep(100);
         rotate(125,DRIVE_SPEED);
         intakeTransfer.setPower(0.8);
@@ -47,10 +47,10 @@ public class AutonomusStraightBlueShoot extends BaseAutonomus {
         intakeTransfer.setPower(0);
         intakeServo.setPower(0);
         moveForward(-43,DRIVE_SPEED);
-        rotate(-130,DRIVE_SPEED);
+        rotate(-125,DRIVE_SPEED);
         sleep(100);
         farShot();
-        moveForward((10+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
+        moveForward((11+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
 
         intakeServo.setPower(1);
         intakeTransfer.setPower(1);

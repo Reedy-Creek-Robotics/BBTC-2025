@@ -154,59 +154,27 @@ public abstract class BaseTeleOp extends LinearOpMode {
     protected void handleMechanisms() {
         camera.update();
 
-        // --- Intake toggle (X button) ---
-        if (gamepad1.x && !xWasPressed) {
-            intakeOn = !intakeOn;
-        }
+        // 1. Determine State from Inputs
+        if (gamepad1.x && !xWasPressed) intakeOn = !intakeOn;
         xWasPressed = gamepad1.x;
 
-        // Intake reversal (toggle) (A button)
-        if (gamepad1.a && !aWasPressed) {
-            intakeReverseOn = !intakeReverseOn;
-        }
+        if (gamepad1.a && !aWasPressed) intakeReverseOn = !intakeReverseOn;
         aWasPressed = gamepad1.a;
 
-        // --- Shooter toggle (B button) ---
-        if (gamepad1.b && !bWasPressed) {
-            shooterOn = !shooterOn;
-        }
+        if (gamepad1.b && !bWasPressed) shooterOn = !shooterOn;
         bWasPressed = gamepad1.b;
 
-        // Servo toggle (Y button)
-        if (gamepad1.y && !yWasPressed) {
-            servoOn = !servoOn;
-        }
+        if (gamepad1.y && !yWasPressed) servoOn = !servoOn;
         yWasPressed = gamepad1.y;
 
-        if(gamepad2.b){
-            longShotOn = false;
-            midShotOn = false;
-            shortShotOn = false;
-            EmergencyShootOn = true;
-        }
+        // Shot Type Selection (Gamepad 2)
+        if (gamepad2.b) { EmergencyShootOn = true; longShotOn = midShotOn = shortShotOn = false; }
+        if (gamepad2.y) { longShotOn = true; midShotOn = shortShotOn = EmergencyShootOn = false; }
+        if (gamepad2.x) { midShotOn = true; longShotOn = shortShotOn = EmergencyShootOn = false; }
+        if (gamepad2.a) { shortShotOn = true; longShotOn = midShotOn = EmergencyShootOn = false; }
 
-        if (gamepad2.y) {
-            longShotOn = true;
-            midShotOn = false;
-            shortShotOn = false;
-            EmergencyShootOn = false;
-        }
-
-        if (gamepad2.x) {
-            longShotOn = false;
-            midShotOn = true;
-            shortShotOn = false;
-            EmergencyShootOn = false;
-        }
-
-        if (gamepad2.a) {
-            shortShotOn = true;
-            midShotOn = false;
-            longShotOn = false;
-            EmergencyShootOn = false;
-        }
-
-        if (longShotOn){
+        // 2. Set Shooter PIDF and Velocity (Logic only, no setPower yet)
+        if (longShotOn) {
             shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.0, 6.5);// Long shot
             tps = 1000;
             telemetry.addLine("LONG SHOT ON");
@@ -214,76 +182,53 @@ public abstract class BaseTeleOp extends LinearOpMode {
             shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 10.5);// Short shot
             tps = 900;
             telemetry.addLine("SHORT SHOT ON");
-        } else if (midShotOn){
+        } else if (midShotOn) {
             shooter_1.setVelocityPIDFCoefficients(28,0,0,13);// Mid shot
             tps = 900;
             telemetry.addLine("MID SHOT ON");
-        } else if (EmergencyShootOn){
+        } else if (EmergencyShootOn) {
             shooter_1.setVelocityPIDFCoefficients(80,0,0,20);// Emergency Long shot
             tps = 1000;
             telemetry.addLine("Emergency Long Shot On");
-        }else { // default
-            shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 10.5);// (short shot)
+        } else {
             tps = 900;
         }
 
+        // 3. Final Power Calculations
+        double finalShooterVel = 0;
+        double finalServoPower = 0;
+        double finalTransferPower = 0;
+
         if (shooterOn) {
-            shooter_1.setVelocity(tps);
-            intakeServo.setPower(servoOn ? 1.0 : 0.0);
+            finalShooterVel = tps;
+            finalServoPower = servoOn ? 1.0 : 0.0;
+            // If shooter is on, transfer should probably feed it if intake is on
+            finalTransferPower = intakeOn ? 1.0 : 0.0;
         } else {
-            shooter_1.setVelocity(0);
+            finalShooterVel = 0;
             servoOn = false;
-            yWasPressed = false;
-            // FORCE intake OFF when shooter turns OFF
             if (lastShooterOn) {
                 intakeOn = false;
-                shortShotOn = false;
-                midShotOn = false;
-                longShotOn = false;
-                EmergencyShootOn = false;
-                telemetry.addLine("SHOOTER OFF");
+                shortShotOn = midShotOn = longShotOn = EmergencyShootOn = false;
             }
         }
         lastShooterOn = shooterOn;
 
-        if (intakeReverseOn) {
-            if (shooterOn) {
-                intakeReverseOn = false;
-            } else {
-                intakeTransfer.setPower(-0.3);
-                intakeServo.setPower(-0.75);
-                intakeOn = false;
-            }
-        }
-        // Priority 2: Standard Intake
-        else if (intakeOn) {
-            // If the shooter is on, we want more speed to feed the shooter faster
-            // While collecting the balls, we want less speed to avoid first ball jamming up the shooter.
-            intakeTransfer.setPower( shooterOn ? 1.0 : 0.75);
-        }
-        // Priority 3: Default
-        else {
-            intakeTransfer.setPower(0.0);
-            intakeServo.setPower(0.0);
+        // Override Intake/Servo logic for Reversal or standard Intake
+        // Only if the shooter isn't already "using" the servo
+        if (intakeReverseOn && !shooterOn) {
+            finalTransferPower = -0.3;
+            finalServoPower = -0.75;
+            intakeOn = false;
+        } else if (intakeOn && !shooterOn) {
+            finalTransferPower = 0.75;
+            finalServoPower = 0.0;
         }
 
-        /*if (shooterOn && (camera.getTid() == 20 || camera.getTid() == 24)) {
-            dist = camera.getDistance();
-            telemetry.addData("dist : ",dist);
-            if (dist >= 120) {
-                if (longShotOn) {
-                    telemetry.addLine("LL agrees");
-                }
-            } else if (dist <= 60) {
-                if (shortShotOn) {
-                    telemetry.addLine("LL agrees");
-                }
-            } else if (dist > 60 && dist < 120) {
-                if (midShotOn) {
-                    telemetry.addLine("LL agrees");
-                }
-            }
-        }*/
+        // 4. Hardware Write (THE ONLY PLACE setPower/setVelocity IS CALLED)
+        shooter_1.setVelocity(finalShooterVel);
+        intakeServo.setPower(finalServoPower);
+        intakeTransfer.setPower(finalTransferPower);
 
         telemetry.update();
     }

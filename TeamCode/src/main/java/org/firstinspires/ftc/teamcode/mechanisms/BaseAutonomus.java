@@ -154,7 +154,7 @@ public abstract class BaseAutonomus extends LinearOpMode {
         shooter_1.setVelocity(1000);
     }
     protected void closeShot(){
-        shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 10.5);
+        shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 9);
         shooter_1.setVelocity(900);
     }
 
