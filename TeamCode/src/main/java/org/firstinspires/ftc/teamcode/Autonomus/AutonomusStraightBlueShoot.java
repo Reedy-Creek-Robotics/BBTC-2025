@@ -18,10 +18,16 @@ public class AutonomusStraightBlueShoot extends BaseAutonomus {
 
         telemetry.addLine("Ready!");
         telemetry.update();
+        camera.setPipelineBlue();
+        camera.update();
+
 
         waitForStart();
 
         if (!opModeIsActive()) return;
+        camera.update();
+
+
 
         // -------------------------------
         // AUTONOMOUS STEPS
@@ -29,7 +35,10 @@ public class AutonomusStraightBlueShoot extends BaseAutonomus {
         // -------------------------------
         farShot();
         moveForward(-9,DRIVE_SPEED);
+        sleep(100);
         rotate(-25,DRIVE_SPEED);
+        sleep(100);
+        rotation = turnCorrectionBlue();
         sleep(100);
         intakeServo.setPower(1);
         intakeTransfer.setPower(1);
@@ -39,24 +48,24 @@ public class AutonomusStraightBlueShoot extends BaseAutonomus {
 
         moveForward(-(11+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
         sleep(100);
-        rotate(125,DRIVE_SPEED);
-        intakeTransfer.setPower(0.8);
-        intakeServo.setPower(-0.8);
-        moveForward(43,0.35);
-        sleep(100);
-        intakeTransfer.setPower(0);
-        intakeServo.setPower(0);
+        rotate(125+rotation,DRIVE_SPEED);
+        intakeTransfer.setPower(0.6);
+        intakeServo.setPower(-1);
+        moveForward(43,0.25);
+        intakeOnUntilDetected();
         moveForward(-43,DRIVE_SPEED);
         rotate(-125,DRIVE_SPEED);
         sleep(100);
         farShot();
-        moveForward((11+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
-
+        moveForward((12+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
+        turnCorrectionBlue();
         intakeServo.setPower(1);
         intakeTransfer.setPower(1);
         sleep(2500);
-
-        moveForward(-10,DRIVE_SPEED);
+        stopShootSequence();
+        camera.setPipelineUseless();
+        camera.update();
+        moveForward(-11,DRIVE_SPEED);
 
         // End
         stopAll();

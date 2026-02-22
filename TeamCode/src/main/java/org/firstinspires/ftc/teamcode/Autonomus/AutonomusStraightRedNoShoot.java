@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
-@Disabled
-@Autonomous(name = "Auto : Red Straight NO-shoot")
+
+@Autonomous(name = "Auto : Red Straight No Shoot")
 public class AutonomusStraightRedNoShoot extends BaseAutonomus {
 
+    // Drive motors
 
     @Override
     public void runOpMode() {
@@ -16,7 +16,8 @@ public class AutonomusStraightRedNoShoot extends BaseAutonomus {
 
         telemetry.addLine("Ready!");
         telemetry.update();
-
+        camera.setPipelineRed();
+        camera.update();
         waitForStart();
 
         if (!opModeIsActive()) return;
@@ -24,13 +25,21 @@ public class AutonomusStraightRedNoShoot extends BaseAutonomus {
         // -------------------------------
         // AUTONOMOUS STEPS
         // -------------------------------
+        farShot();
+        moveForward(-6,0.7);
+        sleep(100);
+        turnCorrectionRed();
+        sleep(100);
+        intakeServo.setPower(1.0);
+        intakeTransfer.setPower(1.0);
+        sleep(2500);
+        shooter_1.setPower(0);
+        stopShootSequence();
+        camera.setPipelineUseless();
+        camera.update();
 
-        sleep(22000);
-        moveForward(5, 0.6);
-        rotate(90, TURN_SPEED);
-        moveForward(17, DRIVE_SPEED);
-
-        // End
+        rotate(-20,DRIVE_SPEED);
+        strafe(20,0.9,StrafeDirection.LEFT);
         stopAll();
     }
 }

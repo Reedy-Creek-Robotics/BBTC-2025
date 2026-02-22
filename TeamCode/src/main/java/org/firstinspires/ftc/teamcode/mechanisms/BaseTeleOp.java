@@ -3,16 +3,22 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+
 
 public abstract class BaseTeleOp extends LinearOpMode {
 
     protected DcMotor flmotor, frmotor, blmotor, brmotor;
     protected DcMotorEx shooter_1, intakeTransfer;
     protected CRServo intakeServo;
+
+
+
 
 
     protected Camera camera;
@@ -44,15 +50,24 @@ public abstract class BaseTeleOp extends LinearOpMode {
 
     private double lastForward = 0;
     private double lastRight = 0;
+
+    private double error = 0;
+
+    private double actualError = 0;
     //private double dist = 0;
     private long lastDirectionChangeTime = 0;
     private static final long REVERSAL_DELAY_MS = 120;
     private double tps = 0;
+    protected long lastLedToggleTime = 0;
+    protected long currentTime = 0;
+    protected Servo led = null;
+    protected double led_color = 0;
 
     public void initializeHardware() {
 
         shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
         camera = new Camera(hardwareMap);
+        led = hardwareMap.get(Servo.class,"led");
 
         flmotor = hardwareMap.get(DcMotor.class, "flmotor");
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
@@ -61,6 +76,9 @@ public abstract class BaseTeleOp extends LinearOpMode {
 
         intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
         intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
+
+
+
 
 
         flmotor.setDirection(DcMotor.Direction.REVERSE);
@@ -172,6 +190,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
         if (gamepad2.y) { longShotOn = true; midShotOn = shortShotOn = EmergencyShootOn = false; }
         if (gamepad2.x) { midShotOn = true; longShotOn = shortShotOn = EmergencyShootOn = false; }
         if (gamepad2.a) { shortShotOn = true; longShotOn = midShotOn = EmergencyShootOn = false; }
+        if(gamepad2.right_bumper || gamepad2.left_bumper) {camera.setPipelineUseless(); telemetry.addLine("Usless Pipeline With Camera Off");}
 
         // 2. Set Shooter PIDF and Velocity (Logic only, no setPower yet)
         if (longShotOn) {
@@ -188,11 +207,14 @@ public abstract class BaseTeleOp extends LinearOpMode {
             telemetry.addLine("MID SHOT ON");
         } else if (EmergencyShootOn) {
             shooter_1.setVelocityPIDFCoefficients(80,0,0,20);// Emergency Long shot
+            camera.setPipelineUseless();
+            camera.update();
             tps = 1000;
             telemetry.addLine("Emergency Long Shot On");
         } else {
             tps = 900;
         }
+
 
         // 3. Final Power Calculations
         double finalShooterVel = 0;
@@ -230,6 +252,30 @@ public abstract class BaseTeleOp extends LinearOpMode {
         intakeServo.setPower(finalServoPower);
         intakeTransfer.setPower(finalTransferPower);
 
+
         telemetry.update();
+    }
+
+    protected boolean redFarShotLED() {
+        error = -(camera.getTx());
+        actualError = 2.8 - error;
+        if (longShotOn && shooterOn){
+            if((1.5 <= error) && (error <= 3.5)){
+                led.setPosition(0.666);
+                return true;
+            }
+        }
+        return false;
+    }
+    protected boolean blueFarShotLED(){
+        error = -(camera.getTx());
+        actualError = -2.8 - error;
+        if (longShotOn && shooterOn){
+            if((-1.5 >= error) && (error <= -3.5)){
+                led.setPosition(0.666);
+                return true;
+            }
+        }
+        return false;
     }
 }

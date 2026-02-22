@@ -4,8 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
-@Disabled
-@Autonomous(name = "Auto : Blue Straight NO-shoot")
+
+@Autonomous(name = "Auto : Blue Straight No Shoot")
 public class AutonomusStraightBlueNoShoot extends BaseAutonomus {
 
 
@@ -16,7 +16,8 @@ public class AutonomusStraightBlueNoShoot extends BaseAutonomus {
 
         telemetry.addLine("Ready!");
         telemetry.update();
-
+        camera.setPipelineBlue();
+        camera.update();
         waitForStart();
 
         if (!opModeIsActive()) return;
@@ -24,13 +25,22 @@ public class AutonomusStraightBlueNoShoot extends BaseAutonomus {
         // -------------------------------
         // AUTONOMOUS STEPS
         // -------------------------------
+        farShot();
+        moveForward(-6,0.7);
+        sleep(100);
+        turnCorrectionBlue();
+        sleep(100);
+        intakeServo.setPower(1.0);
+        intakeTransfer.setPower(1.0);
+        sleep(2500);
+        shooter_1.setPower(0);
+        stopShootSequence();
+        camera.setPipelineUseless();
+        camera.update();
 
-        sleep(22000);
-        moveForward(5, 0.6);
-        rotate(-90, TURN_SPEED);
-        moveForward(17, DRIVE_SPEED);
+        rotate(20,DRIVE_SPEED);
 
-        // End
+        strafe(20,0.9,StrafeDirection.RIGHT);
         stopAll();
     }
 }

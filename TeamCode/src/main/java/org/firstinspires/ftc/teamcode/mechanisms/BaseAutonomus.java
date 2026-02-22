@@ -3,22 +3,40 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 public abstract class BaseAutonomus extends LinearOpMode {
+
+    public enum StrafeDirection {
+        LEFT,
+        RIGHT
+    }
     protected DcMotor flmotor, frmotor, blmotor, brmotor;
 
     // Shooter motors (same as TeleOp)
     protected DcMotorEx shooter_1 ;
+
+    protected DistanceSensor distance1;
+    protected DistanceSensor distance2;
+    protected ColorSensor colorSensor;
 
     // Intake + transfer motors (same as TeleOp)
     protected DcMotor intakeTransfer;
 
     // Servo (same name as TeleOp)
     protected CRServo intakeServo;
+
+    protected Camera camera;
+    public Servo led = null;
+
 
     // Constants
     protected static final double COUNTS_PER_MOTOR_REV = 537.7;
@@ -35,6 +53,9 @@ public abstract class BaseAutonomus extends LinearOpMode {
     protected static final double TURN_SPEED = 0.4;
 
     protected static final double INTAKE_SPEED = 0.5;
+    protected double error = 0;
+    protected double rotation = 0;
+
 
 
     protected void initializeHardware() {
@@ -44,12 +65,19 @@ public abstract class BaseAutonomus extends LinearOpMode {
         frmotor = hardwareMap.get(DcMotor.class, "frmotor");
         blmotor = hardwareMap.get(DcMotor.class, "blmotor");
         brmotor = hardwareMap.get(DcMotor.class, "brmotor");
+        led=hardwareMap.get(Servo.class,"led");
+        camera = new Camera(hardwareMap);
+
 
         shooter_1 = hardwareMap.get(DcMotorEx.class, "shooter_1");
 
         intakeTransfer = hardwareMap.get(DcMotor.class, "intakeTransfer");
 
         intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
+
+        distance1 = hardwareMap.get(DistanceSensor.class, "distance1");
+
+        colorSensor = hardwareMap.get(ColorSensor.class, "color");
 
         // Directions (same as TeleOp)
         flmotor.setDirection(DcMotor.Direction.FORWARD);
@@ -81,6 +109,8 @@ public abstract class BaseAutonomus extends LinearOpMode {
 
         // Default servo position: OPEN
         intakeServo.setPower(0.0);
+        camera.update();
+
         //PIDF values tuned for 810 TPS and shooting distance of ~45inches
     }
 
@@ -123,6 +153,99 @@ public abstract class BaseAutonomus extends LinearOpMode {
 
         stopDrive(); // This calls your sleep(250) which helps settle the bot
     }
+    protected double turnCorrectionBlue(){
+        camera.update();
+        error = -(camera.getTx());
+        rotation = -2.8 - error;
+        if(error <= 0 ){
+            rotate(rotation,0.2);
+        } else if(error > 0){
+            rotate(-rotation,0.2);
+            rotation = -rotation;
+        }
+
+        camera.update();
+        error = -(camera.getTx());
+
+        if((0 >= error) && (error >= -5) ){
+            led.setPosition(0.841);
+        }
+
+        stopDrive();
+        return rotation;
+    }
+    protected double turnCorrectionRed(){
+        camera.update();
+        error = -(camera.getTx());
+        rotation = 2.8 - error;//2.2
+        if(error <= 0 ){
+            rotate(rotation,0.2);
+        } else if(error > 0){
+            rotate(rotation,0.2);
+        }
+
+        camera.update();
+        error = -(camera.getTx());
+
+        if((0 <= error) && (error <= 5) ){
+            led.setPosition(0.841);
+        }
+
+        stopDrive();
+        return rotation;
+    }
+
+    protected void strafe(double inches, double speed, StrafeDirection direction) {
+
+        int target = (int)(inches * COUNTS_PER_INCH);
+
+        setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        if (direction == StrafeDirection.RIGHT) {
+
+            // Strafe Right
+            flmotor.setTargetPosition(target);
+            blmotor.setTargetPosition(-target);
+            frmotor.setTargetPosition(-target);
+            brmotor.setTargetPosition(target);
+
+        } else { // LEFT
+
+            // Strafe Left
+            flmotor.setTargetPosition(-target);
+            blmotor.setTargetPosition(target);
+            frmotor.setTargetPosition(target);
+            brmotor.setTargetPosition(-target);
+        }
+
+        setDriveMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while (opModeIsActive() &&
+                flmotor.isBusy() &&
+                frmotor.isBusy() &&
+                blmotor.isBusy() &&
+                brmotor.isBusy()) {
+
+            int remainingTicks = Math.abs(target - flmotor.getCurrentPosition());
+            double inchesLeft = remainingTicks / COUNTS_PER_INCH;
+
+            double currentPower = speed;
+
+            // Smooth ramp down
+            if (inchesLeft < 20.0) {
+                currentPower = Range.clip((inchesLeft / 15.0) * speed, 0.2, speed);
+            }
+
+            setDrivePower(currentPower);
+
+            telemetry.addData("Strafing", direction);
+            telemetry.addData("Inches Left", "%.2f", inchesLeft);
+            telemetry.update();
+        }
+
+        stopDrive();
+    }
+
 
     protected void rotate(double degrees, double speed) {
         final double TURN_DIAMETER_INCHES = 23.5;
@@ -157,6 +280,10 @@ public abstract class BaseAutonomus extends LinearOpMode {
         shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 9);
         shooter_1.setVelocity(900);
     }
+    protected void veryCloseShot() {
+        shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 8);
+        shooter_1.setVelocity(900);
+    }
 
     // Inside your moveForward method logic:
 
@@ -170,13 +297,14 @@ public abstract class BaseAutonomus extends LinearOpMode {
         intakeTransfer.setPower(0);
         shooter_1.setPower(0);
         intakeServo.setPower(0.0);
+        led.setPosition(0);
         stopDrive();
     }
     protected void stopShootSequence(){
         intakeTransfer.setPower(0);
         shooter_1.setVelocity(0);
         intakeServo.setPower(0.0);
-
+        led.setPosition(0);
     }
 
     protected void setDriveMotorMode(DcMotor.RunMode mode) {
@@ -191,5 +319,20 @@ public abstract class BaseAutonomus extends LinearOpMode {
         frmotor.setPower(power);
         blmotor.setPower(power);
         brmotor.setPower(power);
+    }
+    protected void intakeOnUntilDetected() {
+        intakeTransfer.setPower(0);
+        intakeServo.setPower(0);
+        sleep(100);
+
+        if (distance1.getDistance(DistanceUnit.INCH) < 2) {
+            intakeTransfer.setPower(-0.2);
+            intakeServo.setPower(-0.8);//-0.4
+            sleep(1000); // This is okay in Auto because we WANT to wait
+
+            // Stop everything
+            intakeTransfer.setPower(0);
+            intakeServo.setPower(0);
+        }
     }
 }

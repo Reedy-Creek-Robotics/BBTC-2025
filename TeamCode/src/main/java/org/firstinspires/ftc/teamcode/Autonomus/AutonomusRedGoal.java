@@ -17,7 +17,8 @@ public class AutonomusRedGoal extends BaseAutonomus {
 
         telemetry.addLine("Ready!");
         telemetry.update();
-
+        camera.setPipelineUseless();
+        camera.update();
         waitForStart();
 
         if (!opModeIsActive()) return;
@@ -27,7 +28,7 @@ public class AutonomusRedGoal extends BaseAutonomus {
         // -------------------------------
 
         closeShot();
-        moveForward(56,0.7);
+        moveForward(57,0.7);
         sleep(100);
         intakeServo.setPower(1.0);
         intakeTransfer.setPower(1.0);
@@ -35,19 +36,17 @@ public class AutonomusRedGoal extends BaseAutonomus {
         shooter_1.setPower(0);
         stopShootSequence();
 
-        rotate(-140, DRIVE_SPEED);
+        rotate(-142, DRIVE_SPEED);
         sleep(100);
-        intakeTransfer.setPower(1.0);
-        intakeServo.setPower(-0.8);
+        intakeTransfer.setPower(1);
+        intakeServo.setPower(-1);//-0.8
 
-        moveForward((44),0.35);
-        sleep(100);
-        intakeTransfer.setPower(0.0);
-        intakeServo.setPower(0);
-        moveForward((-40), DRIVE_SPEED);
+        moveForward((44),0.25);//0.35
+        intakeOnUntilDetected();
+        moveForward((-42), DRIVE_SPEED);
 
         closeShot();
-        rotate(140, DRIVE_SPEED);
+        rotate(142, DRIVE_SPEED);
         sleep(100);
         intakeServo.setPower(1.0);
         intakeTransfer.setPower(1);
@@ -55,23 +54,20 @@ public class AutonomusRedGoal extends BaseAutonomus {
         shooter_1.setPower(0);
         stopShootSequence();
 
-        rotate(-55,DRIVE_SPEED);
-        moveForward((18+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
-        rotate(-90,DRIVE_SPEED);
+        rotate(-145,DRIVE_SPEED);
+        strafe((19+HALF_OF_BOT_LENGTH),DRIVE_SPEED,StrafeDirection.RIGHT);
         sleep(100);
-        intakeTransfer.setPower(0.7);
-        intakeServo.setPower(-0.8);
-        moveForward(43,0.35);
-        sleep(100);
-        intakeTransfer.setPower(0);
-        intakeServo.setPower(0);
+        intakeTransfer.setPower(1);
+        intakeServo.setPower(-1);//-0.8
+        moveForward(47,0.25);//45, 0.35
+        intakeOnUntilDetected();
 
 
-        moveForward(-48,DRIVE_SPEED);
-        rotate(92,DRIVE_SPEED);
+
+        moveForward(-47,DRIVE_SPEED);
         closeShot();
-        moveForward(-(17+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
-        rotate(55,DRIVE_SPEED);
+        strafe((19+HALF_OF_BOT_LENGTH+24),DRIVE_SPEED,StrafeDirection.LEFT);
+        rotate(155,DRIVE_SPEED);
         sleep(100);
         intakeServo.setPower(1.0);
         intakeTransfer.setPower(1);

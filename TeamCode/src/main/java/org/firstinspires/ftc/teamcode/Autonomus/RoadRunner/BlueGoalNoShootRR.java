@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Autonomus;
+package org.firstinspires.ftc.teamcode.Autonomus.RoadRunner;
 
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballShootX;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.ballShootY;
@@ -11,10 +11,10 @@ import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.moveOu
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMaxAngAccel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMaxAngVel;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.preciseTurnMinAngAccel;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad1_x_sign;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad1_y_sign;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad2_x_sign;
-import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad2_y_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad3_x_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad3_y_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad4_x_sign;
+import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.quad4_y_sign;
 import static org.firstinspires.ftc.teamcode.mechanisms.RR_RobotConstants.shootTimer;
 
 import com.acmerobotics.roadrunner.Action;
@@ -34,13 +34,13 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDriveClose;
 
 import java.util.Arrays;
 @Disabled
-@Autonomous(name = "Red Goal No Shoot RR", group = "Autonomous")
-public class RedGoalNoShootRR extends LinearOpMode {
+@Autonomous(name = "Blue Goal No Shoot RR", group = "Autonomous")
+public class BlueGoalNoShootRR extends LinearOpMode {
 
     @Override
     public void runOpMode() {
 
-        Pose2d setStartPose = new Pose2d((quad2_x_sign)*47,(quad2_y_sign)*47,Math.toRadians(-45));
+        Pose2d setStartPose = new Pose2d((quad3_x_sign)*47,(quad3_x_sign)*47,Math.toRadians(45));
         MecanumDriveClose drive = new MecanumDriveClose(hardwareMap, setStartPose);
 
         // Define Constraints
@@ -58,15 +58,15 @@ public class RedGoalNoShootRR extends LinearOpMode {
                 // setTangent(180) tells the robot to move toward the center of the field
                 .waitSeconds(22)
                 .setTangent(Math.toRadians(180))
-                .strafeTo(new Vector2d((quad2_x_sign)*(ballShootX),(quad2_y_sign)*(ballShootY)), fastVel, fastAccel)
+                .strafeTo(new Vector2d((quad3_x_sign)*(ballShootX),(quad3_y_sign)*(ballShootY)), fastVel, fastAccel)
 
                 .stopAndAdd(drive.shooterGoalOn())
-                .waitSeconds(1)
+                .waitSeconds(0.3)
                 .stopAndAdd(drive.transferOn())
                 .waitSeconds(shootTimer)
                 .stopAndAdd(drive.stopAll())
 
-                .strafeTo(new Vector2d((quad1_x_sign)*(moveOutX), (quad1_y_sign)*(moveOutY)))
+                .strafeTo(new Vector2d((quad4_x_sign)*(moveOutX), (quad4_y_sign)*(moveOutY)))
                 .build();
 
         Actions.runBlocking(trajectory);

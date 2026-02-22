@@ -1,11 +1,10 @@
 package org.firstinspires.ftc.teamcode.Autonomus;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.mechanisms.BaseAutonomus;
-@Disabled
-@Autonomous(name = "Auto : Red Goal NO-shoot")
+
+@Autonomous(name = "Auto : Red Goal No Shoot")
 public class AutonomusRedGoalNoShoot extends BaseAutonomus {
 
 
@@ -16,7 +15,8 @@ public class AutonomusRedGoalNoShoot extends BaseAutonomus {
 
         telemetry.addLine("Ready!");
         telemetry.update();
-
+        camera.setPipelineUseless();
+        camera.update();
         waitForStart();
 
         if (!opModeIsActive()) return;
@@ -24,12 +24,17 @@ public class AutonomusRedGoalNoShoot extends BaseAutonomus {
         // -------------------------------
         // AUTONOMOUS STEPS
         // -------------------------------
+        veryCloseShot();
+        moveForward(35,0.4);
+        sleep(100);
+        intakeServo.setPower(1.0);
+        intakeTransfer.setPower(1.0);
+        sleep(2500);
+        shooter_1.setPower(0);
+        stopShootSequence();
 
-        sleep(22000);
-        moveForward(5, 0.6);
-        rotate(-55, TURN_SPEED);
-        moveForward(17, DRIVE_SPEED);
-
+        rotate(-20, DRIVE_SPEED);
+        moveForward((-10),0.4);
         // End
         stopAll();
     }
