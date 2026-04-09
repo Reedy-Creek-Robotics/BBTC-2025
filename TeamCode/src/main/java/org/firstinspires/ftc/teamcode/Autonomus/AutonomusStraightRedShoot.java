@@ -44,11 +44,11 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
         moveForward(-(10+HALF_OF_BOT_LENGTH),DRIVE_SPEED);
         sleep(100);
         rotate(-120-rotation,DRIVE_SPEED);
-        intakeTransfer.setPower(0.6);
+        intakeTransfer.setPower(0.5);
         intakeServo.setPower(-1);
-        moveForward(43,0.25);
+        moveForward(45,0.25);
         intakeOnUntilDetected();
-        moveForward(-43,DRIVE_SPEED);
+        moveForward(-45,DRIVE_SPEED);
         rotate(115,DRIVE_SPEED);
         sleep(100);
         farShot();
@@ -59,7 +59,7 @@ public class AutonomusStraightRedShoot extends BaseAutonomus {
         sleep(2500);
         camera.setPipelineUseless();
         camera.update();
-        moveForward(-10,DRIVE_SPEED);
+        moveForward(-18,DRIVE_SPEED);
         // End
         stopAll();
     }
