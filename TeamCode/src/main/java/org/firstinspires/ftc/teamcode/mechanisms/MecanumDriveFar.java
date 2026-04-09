@@ -325,14 +325,18 @@ public final class MecanumDriveFar {
         return new TrajectoryActionBuilder(TurnAction::new, FollowTrajectoryAction::new, new TrajectoryBuilderParams(1e-6, new ProfileParams(0.25, 0.1, 1e-2)), beginPose, 0.0, defaultTurnConstraints, defaultVelConstraint, defaultAccelConstraint);
     }
 
-    // --- SHOOTER ACTIONS ---
+    // --- SHOOTER ACTIONS (using centralized constants) ---
     public Action shooterStraightOn() {
-        shooter_1.setVelocityPIDFCoefficients(95, 0.0, 0.0, 9.5);
-        return new InstantAction(() -> shooter_1.setVelocity(1050));
+        org.firstinspires.ftc.teamcode.constants.ShooterConstants.ShotType s =
+                org.firstinspires.ftc.teamcode.constants.ShooterConstants.ShotType.LONG;
+        shooter_1.setVelocityPIDFCoefficients(s.p, s.i, s.d, s.f);
+        return new InstantAction(() -> shooter_1.setVelocity(s.tps));
     }
     public Action shooterGoalOn() {
-        shooter_1.setVelocityPIDFCoefficients(30, 0.0, 0.25, 10.5);
-        return new InstantAction(() -> shooter_1.setVelocity(900));
+        org.firstinspires.ftc.teamcode.constants.ShooterConstants.ShotType s =
+                org.firstinspires.ftc.teamcode.constants.ShooterConstants.ShotType.SHORT;
+        shooter_1.setVelocityPIDFCoefficients(s.p, s.i, s.d, s.f);
+        return new InstantAction(() -> shooter_1.setVelocity(s.tps));
     }
     public Action transferOn() {
         return new InstantAction(() -> {

@@ -38,6 +38,14 @@ public class Camera {
         limelight.pipelineSwitch(2);
     }
 
+    /**
+     * Switch to any pipeline by index (0-9).
+     * @param index Pipeline ID as configured in the Limelight web UI.
+     */
+    public void setPipeline(int index) {
+        limelight.pipelineSwitch(index);
+    }
+
     public void update() {
         LLResult result = limelight.getLatestResult();
 

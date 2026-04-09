@@ -12,6 +12,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.constants.DriveConstants;
+import org.firstinspires.ftc.teamcode.constants.ShooterConstants.ShotType;
 
 public abstract class BaseAutonomus extends LinearOpMode {
 
@@ -38,21 +40,13 @@ public abstract class BaseAutonomus extends LinearOpMode {
     public Servo led = null;
 
 
-    // Constants
-    protected static final double COUNTS_PER_MOTOR_REV = 537.7;
-    protected static final double DRIVE_GEAR_REDUCTION = 1.0;
-    protected static final double WHEEL_DIAMETER_INCHES = 4.25;
+    // Constants — now sourced from centralized DriveConstants
+    protected static final double COUNTS_PER_INCH = DriveConstants.COUNTS_PER_INCH;
+    protected static final double HALF_OF_BOT_LENGTH = DriveConstants.HALF_OF_BOT_LENGTH;
+    protected static final double DRIVE_SPEED = DriveConstants.DRIVE_SPEED;
+    protected static final double TURN_SPEED = DriveConstants.TURN_SPEED;
+    protected static final double INTAKE_SPEED = DriveConstants.INTAKE_SPEED;
 
-    protected static final double HALF_OF_BOT_LENGTH = 8.5;
-    protected static final double COUNTS_PER_INCH =
-            (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-                    (WHEEL_DIAMETER_INCHES * Math.PI);
-
-    protected static final double SHOOTER_TPS = 1000;
-    protected static final double DRIVE_SPEED = 0.9;
-    protected static final double TURN_SPEED = 0.4;
-
-    protected static final double INTAKE_SPEED = 0.5;
     protected double error = 0;
     protected double rotation = 0;
 
@@ -79,11 +73,11 @@ public abstract class BaseAutonomus extends LinearOpMode {
 
         colorSensor = hardwareMap.get(ColorSensor.class, "color");
 
-        // Directions (same as TeleOp)
-        flmotor.setDirection(DcMotor.Direction.FORWARD);
-        blmotor.setDirection(DcMotor.Direction.FORWARD);
-        frmotor.setDirection(DcMotor.Direction.REVERSE);
-        brmotor.setDirection(DcMotor.Direction.REVERSE);
+        // Directions — matched to TeleOp (FL/BL reversed, FR/BR forward)
+        flmotor.setDirection(DcMotor.Direction.REVERSE);
+        blmotor.setDirection(DcMotor.Direction.REVERSE);
+        frmotor.setDirection(DcMotor.Direction.FORWARD);
+        brmotor.setDirection(DcMotor.Direction.FORWARD);
 
         shooter_1.setDirection(DcMotorSimple.Direction.FORWARD);
         intakeTransfer.setDirection(DcMotor.Direction.REVERSE);
@@ -248,8 +242,7 @@ public abstract class BaseAutonomus extends LinearOpMode {
 
 
     protected void rotate(double degrees, double speed) {
-        final double TURN_DIAMETER_INCHES = 23.5;
-        double inchesToTurn = (degrees / 360.0) * (TURN_DIAMETER_INCHES * Math.PI);
+        double inchesToTurn = (degrees / 360.0) * (DriveConstants.TURN_DIAMETER_INCHES * Math.PI);
         int target = (int)(inchesToTurn * COUNTS_PER_INCH);
 
         setDriveMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -272,17 +265,22 @@ public abstract class BaseAutonomus extends LinearOpMode {
 
         stopDrive();
     }
-    protected void farShot(){
-        shooter_1.setVelocityPIDFCoefficients(75, 0.0, 0.0, 6.5);
-        shooter_1.setVelocity(1000);
+    protected void farShot() {
+        ShotType s = ShotType.LONG;
+        shooter_1.setVelocityPIDFCoefficients(s.p, s.i, s.d, s.f);
+        shooter_1.setVelocity(s.tps);
     }
-    protected void closeShot(){
-        shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 9);
-        shooter_1.setVelocity(900);
+
+    protected void closeShot() {
+        ShotType s = ShotType.SHORT;
+        shooter_1.setVelocityPIDFCoefficients(s.p, s.i, s.d, s.f);
+        shooter_1.setVelocity(s.tps);
     }
+
     protected void veryCloseShot() {
-        shooter_1.setVelocityPIDFCoefficients(28, 0.0, 0, 8);
-        shooter_1.setVelocity(900);
+        ShotType s = ShotType.MID;
+        shooter_1.setVelocityPIDFCoefficients(s.p, s.i, s.d, s.f);
+        shooter_1.setVelocity(s.tps);
     }
 
     // Inside your moveForward method logic:
