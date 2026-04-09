@@ -24,6 +24,9 @@ allprojects {
         google()
         maven { url = 'https://maven.brott.dev/' }
     }
+    // Redirect build directory to a path outside of OneDrive to avoid sync/lock issues
+    // Using a project-specific subfolder in C:\temp\gradle-builds
+    layout.buildDirectory.set(file("C:/temp/gradle-builds/${rootProject.name}/${project.name}"))
 }
 
 repositories {
