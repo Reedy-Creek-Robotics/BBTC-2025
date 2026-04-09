@@ -44,6 +44,6 @@ if (-not $cmd) {
 
 Write-Host "`nExecuting: gradlew.bat $cmd`n" -ForegroundColor Cyan
 
-# Execute Gradle with Java 17 override and custom build directory flag
+# Execute Gradle with Java 17 override
 $env:JAVA_HOME = $JAVA_HOME_17
-.\gradlew.bat $cmd -PuseCustomBuildDir=true
+.\gradlew.bat $cmd -PuseCustomBuildDir=true "-Dorg.gradle.java.home=$JAVA_HOME_17"
