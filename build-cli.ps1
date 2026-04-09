@@ -1,7 +1,7 @@
 # FTC Build CLI Helper Script
 # This script automates common build tasks for this project without requiring Android Studio.
 
-$JAVA_HOME_17 = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+$JAVA_HOME_17 = "C:\PROGRA~1\ECLIPS~1\JDK-17~1.8-H"
 $ANDROID_SDK = "C:\Users\unwir\AppData\Local\Android\Sdk"
 
 Write-Host "Checking Environment..." -ForegroundColor Cyan
