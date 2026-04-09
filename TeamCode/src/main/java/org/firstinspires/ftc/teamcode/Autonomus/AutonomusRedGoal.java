@@ -38,7 +38,7 @@ public class AutonomusRedGoal extends BaseAutonomus {
 
         rotate(-142, DRIVE_SPEED);
         sleep(100);
-        intakeTransfer.setPower(1);
+        intakeTransfer.setPower(0.5);
         intakeServo.setPower(-1);//-0.8
 
         moveForward((44),0.25);//0.35
@@ -57,7 +57,7 @@ public class AutonomusRedGoal extends BaseAutonomus {
         rotate(-145,DRIVE_SPEED);
         strafe((19+HALF_OF_BOT_LENGTH),DRIVE_SPEED,StrafeDirection.RIGHT);
         sleep(100);
-        intakeTransfer.setPower(1);
+        intakeTransfer.setPower(0.5);
         intakeServo.setPower(-1);//-0.8
         moveForward(47,0.25);//45, 0.35
         intakeOnUntilDetected();
@@ -66,7 +66,7 @@ public class AutonomusRedGoal extends BaseAutonomus {
 
         moveForward(-47,DRIVE_SPEED);
         closeShot();
-        strafe((19+HALF_OF_BOT_LENGTH+24),DRIVE_SPEED,StrafeDirection.LEFT);
+        strafe((19+HALF_OF_BOT_LENGTH+28),DRIVE_SPEED,StrafeDirection.LEFT);
         rotate(155,DRIVE_SPEED);
         sleep(100);
         intakeServo.setPower(1.0);

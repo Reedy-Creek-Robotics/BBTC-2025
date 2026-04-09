@@ -41,6 +41,8 @@ public abstract class BaseTeleOp extends LinearOpMode {
     private boolean xWasPressed = false;
 
     private boolean servoOn = false;
+
+    protected boolean killLED = false;
     private boolean yWasPressed = false;
 
     private boolean longShotOn = false;
@@ -190,7 +192,7 @@ public abstract class BaseTeleOp extends LinearOpMode {
         if (gamepad2.y) { longShotOn = true; midShotOn = shortShotOn = EmergencyShootOn = false; }
         if (gamepad2.x) { midShotOn = true; longShotOn = shortShotOn = EmergencyShootOn = false; }
         if (gamepad2.a) { shortShotOn = true; longShotOn = midShotOn = EmergencyShootOn = false; }
-        if(gamepad2.right_bumper || gamepad2.left_bumper) {camera.setPipelineUseless(); telemetry.addLine("Usless Pipeline With Camera Off");}
+        if(gamepad2.right_bumper || gamepad2.left_bumper) {camera.setPipelineUseless(); killLED = true; telemetry.addLine("Usless Pipeline With Camera Off");}
 
         // 2. Set Shooter PIDF and Velocity (Logic only, no setPower yet)
         if (longShotOn) {
