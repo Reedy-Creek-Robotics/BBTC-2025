@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name = "MecanumTeleOp", group = "Robot")
-public class MecanumTeleOp extends LinearOpMode {
+public class godbole2000 extends LinearOpMode {
 
     @Override
     public void runOpMode() {

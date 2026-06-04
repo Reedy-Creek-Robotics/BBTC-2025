@@ -10,7 +10,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.mechanisms.TestBench
+import org.firstinspires.ftc.teamcode.mechanisms.TestBench;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class AprilTagAutoAlignFTC extends OpMode {
 
     @Override
     public void loop() {
-        YawPitchRollAngles orientation = bench.getOrientation();
-        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES))
+       // YawPitchRollAngles orientation = bench.getOrientation();
+       // limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
     }
 }
