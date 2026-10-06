@@ -42,6 +42,25 @@ import java.util.Locale;
  *       -7 in behind the sticker plane (half of the 14 in opening height).</li>
  * </ul>
  *
+ * <h3>Competition behaviour</h3>
+ * <ul>
+ *   <li>Output filtering: constant-velocity filter on the fused aim point (smooth, no
+ *       per-frame jitter), innovation gate rejects spikes (wrong-cell flicker, motion blur),
+ *       and a coast window ({@link #COAST_MS}) keeps the turret command alive through brief
+ *       occlusions instead of blinking to null.</li>
+ *   <li>Gates: {@link #MAX_SPREAD_IN} rejects a fusion whose tags disagree, {@link #MAX_MEAS_AGE_MS}
+ *       rejects stale results, {@link #MIN_VIEW_COS} rejects edge-on views.</li>
+ *   <li>Cluster hysteresis: the previously tracked cluster is kept when counts tie, so the
+ *       aim never hops cell to cell.</li>
+ *   <li>Turret API: gate the turret on {@link #isLocked()}, feed forward with
+ *       {@link #getBearingRateDegPerSec()}, read {@link #getBearingDeg()} /
+ *       {@link #getElevationDeg()} / {@link #getRangeIn()}. Use {@link #computeAim()} for a
+ *       free launch elevation, or {@link #computeAimFixedElevation(double)} to solve velocity
+ *       at a locked barrel angle.</li>
+ *   <li>Threading: call {@link #update()}, the compute methods and the getters from a single
+ *       thread (the OpMode loop); the class is not synchronized.</li>
+ * </ul>
+ *
  * <h3>Calibration TODOs (tune on robot)</h3>
  * <ul>
  *   <li>{@link #MUZZLE_VELOCITY_IN_S} - measure with a chronograph / flag method.</li>
@@ -142,6 +161,29 @@ public class limelightbiobuzz {
     /** Per-tag cluster-centre residual (in) above which an observation is dropped (MAD floor). */
     public double OUTLIER_FLOOR_IN = 0.75;
 
+    // --- competition output filtering / gating ---
+
+    /** Position correction weight of the output filter (0..1). Lower = smoother. */
+    public double FILTER_ALPHA = 0.35;
+
+    /** Velocity correction weight of the output filter (0..1). Lower = smoother. */
+    public double FILTER_BETA = 0.10;
+
+    /** Innovation gate (in): a measurement further than this from the prediction is a spike. */
+    public double FILTER_GATE_IN = 8.0;
+
+    /** Keep predicting through this many ms of lost vision before declaring "lost". */
+    public double COAST_MS = 300.0;
+
+    /** Results older than this are not used to correct the filter. */
+    public double MAX_MEAS_AGE_MS = 400.0;
+
+    /** Reject a fused solution whose per-tag centre estimates disagree by more than this (in). */
+    public double MAX_SPREAD_IN = 2.0;
+
+    /** isLocked() requires at least this fused confidence. */
+    public double LOCK_CONFIDENCE = 0.6;
+
     /**
      * Pipeline index holding the BIOBUZZ AprilTags config (web UI: pipeline 3).
      * The solver keeps the camera pinned to it and re-selects it if anything
@@ -189,6 +231,22 @@ public class limelightbiobuzz {
     private int managedPipeline = DEFAULT_PIPELINE_INDEX;
     private long lastPipelineSwitchMs = 0;
     private int lastPipelineIdx = -1;   // pipeline index reported by the latest result
+
+    // --- fusion diagnostics (for telemetry) ---
+    private String fuseNote = "no result yet";
+    private int parsedCount = 0;        // cluster tags parsed this cycle
+    private int usedCount = 0;          // tags that survived outlier rejection
+    private int rejectedCount = 0;      // tags dropped by the MAD filter
+    private Vec3 fusedCentre = new Vec3(0, 0, 0);   // triangulated cluster centre, robot axes
+
+    // --- output filter (constant-velocity filter on the fused aim point) ---
+    private Vec3 filtPos = null;            // filtered aim point, robot axes, inches
+    private Vec3 filtVel = new Vec3(0, 0, 0);
+    private boolean filterInit = false;
+    private boolean coasting = false;
+    private long filterPredictMs = -1;
+    private long filterMeasMs = -1;      // last ACCEPTED correction
+    private long lastFreshMs = -1;       // last cycle with a fresh fusion
 
     // ---------------------------------------------------------------------
     // Construction / lifecycle
@@ -252,6 +310,12 @@ public class limelightbiobuzz {
      * @return true if at least one cluster tag was seen this cycle.
      */
     public boolean update() {
+        boolean saw = updateInternal();
+        runFilter();     // runs every cycle, even with no vision (predict/coast)
+        return saw;
+    }
+
+    private boolean updateInternal() {
         LLResult res = limelight.getLatestResult();
 
         // IMU sampling every update, even with no vision, so yaw rate stays fresh.
@@ -273,6 +337,8 @@ public class limelightbiobuzz {
         if (res == null || !res.isValid()) {
             fusedValid = false;
             obs.clear();
+            parsedCount = 0;
+            fuseNote = "no valid result";
             return false;
         }
 
@@ -322,9 +388,11 @@ public class limelightbiobuzz {
                         .mul(rotX(Math.toRadians(CAM_MOUNT_ROLL_DEG)));
                 rot = rMount.mul(rot);
 
-                // Tag frame axes in camera space (columns of R).
-                Vec3 uCol = rot.col(0);        // pose X column
-                Vec3 nCol = rot.col(2);        // pose Z column
+                // Tag frame axes (columns of R), mapped to ROBOT axes:
+                // camera (X right, Y down, Z forward) -> robot (X fwd, Y left, Z up).
+                Vec3 uCol = camToRobot(rot.col(0));     // pose X column
+                Vec3 nCol = camToRobot(rot.col(2));     // pose Z column
+                p = camToRobot(p);
 
                 // n: sign-fix to point OUT of the sticker toward the camera.
                 Vec3 toCam = p.scale(-1.0 / p.len());
@@ -338,8 +406,10 @@ public class limelightbiobuzz {
             }
         }
 
+        parsedCount = obs.size();
         if (obs.isEmpty()) {
             fusedValid = false;
+            fuseNote = "no BIOBUZZ cluster tags in frame";
             return false;
         }
 
@@ -375,8 +445,21 @@ public class limelightbiobuzz {
                 bestStart = cl[0];
             }
         }
+        // Hysteresis: if the previously-fused cluster is still visible and within one tag
+        // of the leader, stay with it - prevents cell-to-cell flicker when counts tie.
+        if (clusterStart >= 0 && bestStart != clusterStart && bestCount > 0) {
+            int prevCnt = 0;
+            for (TagObs t : obs) {
+                if (t.id >= clusterStart && t.id <= clusterStart + 3) prevCnt++;
+            }
+            if (prevCnt > 0 && prevCnt >= bestCount - 1) {
+                bestStart = clusterStart;
+                bestCount = prevCnt;
+            }
+        }
         if (bestStart < 0) {
             fusedValid = false;
+            fuseNote = "no dominant cluster";
             return;
         }
 
@@ -390,6 +473,7 @@ public class limelightbiobuzz {
         for (TagObs t : accepted) nSum = nSum.plus(t.n);
         if (nSum.lenSq() < 1e-9) {
             fusedValid = false;
+            fuseNote = "degenerate sticker normal";
             return;
         }
         Vec3 n = nSum.norm();
@@ -421,6 +505,7 @@ public class limelightbiobuzz {
         u = u.minus(n.scale(u.dot(n)));       // remove any n component
         if (u.lenSq() < 1e-9) {
             fusedValid = false;
+            fuseNote = "degenerate row axis";
             return;
         }
         u = u.norm();
@@ -461,6 +546,7 @@ public class limelightbiobuzz {
             viewSum += accepted.get(i).viewCos;
             used++;
         }
+        rejectedCount = m - used;
         if (used == 0 || wSum <= 0) {          // all rejected -> fall back to median
             if (used == 0) {
                 cSum = med;
@@ -469,6 +555,7 @@ public class limelightbiobuzz {
                 viewSum = 1;
             } else {
                 fusedValid = false;
+                fuseNote = "weight failure";
                 return;
             }
         }
@@ -476,12 +563,21 @@ public class limelightbiobuzz {
         spreadIn = Math.sqrt(spreadSq / used);
         viewCosMean = viewSum / used;
 
+        // Competition gate: if the per-tag centre estimates disagree this much, the fuse
+        // is wrong (bad pose, mixed cluster, motion blur) - better no shot than a bad one.
+        if (accepted.size() > 1 && spreadIn > MAX_SPREAD_IN) {
+            fusedValid = false;
+            fuseNote = "spread " + spreadIn + " in too high";
+            return;
+        }
+
         // ---- aim point: cluster centre + fixed offset in cluster frame ----
         aimCam = centre
                 .plus(u.scale(AIM_U_IN))
                 .plus(v.scale(AIM_V_IN))
                 .plus(n.scale(AIM_N_IN));
 
+        fusedCentre = centre;
         fusedU = u;
         fusedV = v;
         fusedN = n;
@@ -495,6 +591,10 @@ public class limelightbiobuzz {
         confidence = Math.max(0, Math.min(1,
                 countScore * (0.5 + 0.5 * viewCosMean) * spreadScore));
 
+        usedCount = used;
+        fuseNote = (rejectedCount > 0)
+                ? ("ok - rejected " + rejectedCount + "/" + m)
+                : ("ok - all " + m + " agree");
         fusedValid = true;
     }
 
@@ -503,12 +603,32 @@ public class limelightbiobuzz {
     // ---------------------------------------------------------------------
 
     /**
-     * Compute the shot for the last fused observation.
+     * Compute the shot for the current filtered aim point.
      *
-     * @return the aim solution, or null if no cluster is currently fused.
+     * <p>Uses the output-filter point (smooth, spike-gated, coasting-capable) whenever the
+     * filter has acquired; falls back to the raw fusion on the very first frame.</p>
+     *
+     * @return the aim solution, or null if we have no usable cluster solution.
      */
     public AimResult computeAim() {
-        if (!fusedValid) {
+        return computeAimWith(false, Double.NaN);
+    }
+
+    /**
+     * Compute the shot at a FIXED launch elevation (deg). The returned solution carries the
+     * muzzle velocity required to reach the target at that angle (mechanisms with a
+     * fixed-barrel shooter, or to compare flat vs lobbed options at match speed).
+     *
+     * @param elevationDeg fixed launch elevation above the gravity-aligned horizon, degrees
+     * @return the aim solution with {@link AimResult#velocityInS} solved, or null if unusable.
+     */
+    public AimResult computeAimFixedElevation(double elevationDeg) {
+        return computeAimWith(true, elevationDeg);
+    }
+
+    private AimResult computeAimWith(boolean fixedElevation, double thetaDeg) {
+        boolean fresh = fusedValid;
+        if (!filterInit && !fresh) {
             lastAim = null;
             return null;
         }
@@ -516,7 +636,8 @@ public class limelightbiobuzz {
         double dt = COMPENSATE_LATENCY ? ageMs / 1000.0 : 0.0;
 
         // ---- latency compensation: robot rotated (and moved) while the result aged ----
-        Vec3 p = aimCam;
+        Vec3 src = filterInit ? filtPos : aimCam;
+        Vec3 p = src;
         if (dt > 1e-4) {
             double dPsi = yawRate * dt * YAW_SIGN;
             p = p.rotZ(-dPsi);                     // fixed point, new robot frame
@@ -525,6 +646,7 @@ public class limelightbiobuzz {
 
         AimResult r = new AimResult();
         r.valid = true;
+        r.coasting = filterInit && !fresh;
         r.tagCount = accepted.size();
         r.tagIds = seenIds.clone();
         r.clusterStart = clusterStart;
@@ -548,21 +670,35 @@ public class limelightbiobuzz {
 
         // ---- solve launch ----
         double theta;
-        if (USE_DRAG_MODEL) {
-            theta = solveElevationDrag(r.rangeIn, r.deltaHIn);
-            r.model = "DRAG";
+        if (fixedElevation) {
+            theta = Math.toRadians(thetaDeg);
+            double vReq = solveRequiredVelocity(r.rangeIn, r.deltaHIn, theta);
+            r.reachable = Double.isFinite(vReq);
+            r.velocityInS = Double.isFinite(vReq) ? vReq : MUZZLE_VELOCITY_IN_S;
+            r.model = "FIXED";
         } else {
-            theta = solveElevationVacuum(r.rangeIn, r.deltaHIn, HIGH_ARC, r);
-            r.model = "VACUUM";
+            r.velocityInS = MUZZLE_VELOCITY_IN_S;
+            // Reachability: the vacuum discriminant bounds what ANY model can hit.
+            double v2 = r.velocityInS * r.velocityInS;
+            double disc = v2 * v2 - GRAVITY
+                    * (GRAVITY * r.rangeIn * r.rangeIn + 2.0 * r.deltaHIn * v2);
+            r.reachable = disc >= 0;
+            if (USE_DRAG_MODEL) {
+                theta = solveElevationDrag(r.rangeIn, r.deltaHIn);
+                r.model = "DRAG";
+            } else {
+                theta = solveElevationVacuum(r.rangeIn, r.deltaHIn, HIGH_ARC, null);
+                r.model = "VACUUM";
+            }
         }
         r.elevationDeg = Math.toDegrees(theta);
-        r.velocityInS = MUZZLE_VELOCITY_IN_S;
         r.highArc = theta >= Math.PI / 4.0;
 
         // ---- flight time & impact speed from the chosen model ----
         double[] out = new double[2];
-        if (USE_DRAG_MODEL) {
-            simMiss(r.rangeIn, r.deltaHIn, r.velocityInS, theta, out);
+        if (USE_DRAG_MODEL && !fixedElevation) {
+            double miss = simMiss(r.rangeIn, r.deltaHIn, r.velocityInS, theta, out);
+            if (miss <= -999) r.reachable = false;   // sim never got there
         } else {
             double ct = Math.cos(theta);
             out[0] = (ct > 1e-6) ? r.rangeIn / (r.velocityInS * ct) : 0;
@@ -574,6 +710,115 @@ public class limelightbiobuzz {
 
         lastAim = r;
         return r;
+    }
+
+    // ---------------------------------------------------------------------
+    // Output filter - smooth, spike-gated, survives brief vision dropouts
+    // ---------------------------------------------------------------------
+
+    /**
+     * Constant-velocity filter on the fused aim point, run every {@link #update()} cycle.
+     *
+     * <p>Predicts forward each cycle, corrects with new measurements (FILTER_ALPHA /
+     * FILTER_BETA), rejects spikes beyond FILTER_GATE_IN (wrong-cell flicker, motion blur),
+     * and keeps predicting through COAST_MS of lost vision so the turret command never
+     * blinks. After the coast window the filter goes "lost" and must re-acquire (snap).</p>
+     */
+    private void runFilter() {
+        long now = System.currentTimeMillis();
+        double dt = (filterPredictMs > 0)
+                ? Math.min(0.1, (now - filterPredictMs) / 1000.0) : 0.0;
+        filterPredictMs = now;
+
+        if (filterInit) {
+            filtPos = filtPos.plus(filtVel.scale(dt));      // predict to now
+        }
+
+        boolean fresh = fusedValid && ageMs <= MAX_MEAS_AGE_MS;
+        if (fresh) {
+            lastFreshMs = now;
+            boolean needsSnap = !filterInit || filterMeasMs < 0
+                    || (now - filterMeasMs) > COAST_MS;
+            if (needsSnap) {
+                // (re)acquire: snap to the measurement, forget old velocity.
+                // Also covers a filter stuck behind a persistently-gated track.
+                filtPos = aimCam;
+                filtVel = new Vec3(0, 0, 0);
+                filterInit = true;
+                filterMeasMs = now;
+            } else {
+                Vec3 res = aimCam.minus(filtPos);
+                if (res.len() <= FILTER_GATE_IN) {
+                    // accepted: correct position and velocity
+                    filtPos = filtPos.plus(res.scale(FILTER_ALPHA));
+                    filtVel = filtVel.plus(res.scale(FILTER_BETA / Math.max(dt, 0.004)));
+                    filterMeasMs = now;
+                }
+                // else: spike - keep predicting on the old track (does NOT refresh
+                // filterMeasMs, so sustained gating falls back to a snap after COAST_MS)
+            }
+            coasting = false;
+        } else {
+            if (filterInit && lastFreshMs > 0 && (now - lastFreshMs) > COAST_MS) {
+                filterInit = false;                        // lost for too long
+                filtVel = new Vec3(0, 0, 0);
+                coasting = false;
+            } else {
+                coasting = filterInit;                     // coasting inside the window
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Turret-facing API
+    // ---------------------------------------------------------------------
+
+    /** True while the output filter holds a usable solution (fresh or coasting). */
+    public boolean isFilterValid() {
+        return filterInit;
+    }
+
+    /** True while coasting through a vision dropout (still usable, within the COAST_MS window). */
+    public boolean isCoasting() {
+        return coasting;
+    }
+
+    /**
+     * Locked = a fresh-enough solution above LOCK_CONFIDENCE. This is the flag the turret
+     * controller should gate on; it never flickers (hysteresis comes from the filter and
+     * the coast window).
+     */
+    public boolean isLocked() {
+        return filterInit && confidence >= LOCK_CONFIDENCE && filterMeasMs > 0
+                && (System.currentTimeMillis() - filterMeasMs) <= COAST_MS;
+    }
+
+    /** Filtered aim azimuth, degrees (+ = left of forward). NaN until acquired. */
+    public double getBearingDeg() {
+        return filterInit ? azDeg(filtPos) : Double.NaN;
+    }
+
+    /** Filtered aim elevation, degrees (+ = up). NaN until acquired. */
+    public double getElevationDeg() {
+        return filterInit ? elDeg(filtPos) : Double.NaN;
+    }
+
+    /** Filtered aim range, inches. NaN until acquired. */
+    public double getRangeIn() {
+        return filterInit ? filtPos.len() : Double.NaN;
+    }
+
+    /** Aim-point azimuth rate, deg/s - feed this forward to the turret controller. */
+    public double getBearingRateDegPerSec() {
+        if (!filterInit) return 0;
+        double den = filtPos.x * filtPos.x + filtPos.y * filtPos.y;
+        if (den < 1e-6) return 0;
+        return Math.toDegrees((filtPos.x * filtVel.y - filtPos.y * filtVel.x) / den);
+    }
+
+    /** Distance between the raw fusion and the filtered point, in (how much smoothing is on). */
+    public double getFilterDeviationIn() {
+        return (filterInit && fusedValid) ? filtPos.minus(aimCam).len() : 0;
     }
 
     /**
@@ -753,6 +998,16 @@ public class limelightbiobuzz {
         return aimCam;
     }
 
+    /** Triangulated cluster centre (robot axes, inches, relative to camera). */
+    public Vec3 getTriangulatedCentre() {
+        return fusedCentre;
+    }
+
+    /** Why the last fusion attempt failed (or "ok ..."). For telemetry/debug. */
+    public String getFuseNote() {
+        return fuseNote;
+    }
+
     public Vec3 getU() {
         return fusedU;
     }
@@ -805,32 +1060,74 @@ public class limelightbiobuzz {
     public void addTelemetry(Telemetry t) {
         t.addLine("-- BioBuzz --");
         t.addData("pipeline", "camera %d / pinned %d", lastPipelineIdx, managedPipeline);
-        if (!fusedValid) {
-            t.addData("cluster", "none (age %.0f ms, stale %.0f ms)", ageMs, stalenessMs);
-            return;
-        }
-
-        // --- tracking / fusion quality ---
-        StringBuilder ids = new StringBuilder();
-        for (int id : seenIds) ids.append(id).append(' ');
-        t.addData("cluster", "%d  tags %d  conf %.2f", clusterStart, accepted.size(), confidence);
-        t.addData("ids", ids.toString().trim());
-        t.addData("fusion", "spread %.2f in  viewCos %.2f", spreadIn, viewCosMean);
+        t.addData("fuse", "%s  (parsed %d, used %d, rejected %d)",
+                fuseNote, parsedCount, usedCount, rejectedCount);
         t.addData("latency", "age %.0f ms  stale %.0f ms  yawRate %.2f rad/s",
                 ageMs, stalenessMs, yawRate);
+        if (filterInit) {
+            t.addData("lock", "%s%s  az %.1f  el %.1f  rng %.1f  rate %.1f deg/s",
+                    isLocked() ? "LOCKED" : "weak",
+                    coasting ? " COAST" : "",
+                    getBearingDeg(), getElevationDeg(), getRangeIn(),
+                    getBearingRateDegPerSec());
+            t.addData("filter dev", "%.2f in (raw vs filtered)", getFilterDeviationIn());
+        } else {
+            t.addData("lock", "no fix (filter not acquired)");
+        }
 
-        // --- camera-relative aim point (inches, robot axes) ---
-        t.addData("aimCam", "x %.1f  y %.1f  z %.1f", aimCam.x, aimCam.y, aimCam.z);
+        // --- raw per-tag angles (robot axes): triangulation inputs. Shown even when
+        // fusion fails, so you can see what the detector actually has to work with. ---
+        for (TagObs o : obs) {
+            t.addData("T" + o.id, "az %6.1f  el %5.1f  rng %5.1f  inc %4.1f  a %.0f",
+                    azDeg(o.p), elDeg(o.p), o.p.len(),
+                    Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, o.viewCos)))),
+                    o.area);
+        }
+
+        if (fusedValid) {
+            // --- triangulation result: each tag's pose (minus its known sticker offset)
+            // independently points at the same cluster centre; these lines show where it
+            // landed and how well the independent measurements agreed. ---
+            StringBuilder ids = new StringBuilder();
+            for (int id : seenIds) ids.append(id).append(' ');
+            t.addData("cluster", "%d  tags %d  conf %.2f  ids %s",
+                    clusterStart, accepted.size(), confidence, ids.toString().trim());
+            t.addData("tri centre", "x %.1f  y %.1f  z %.1f",
+                    fusedCentre.x, fusedCentre.y, fusedCentre.z);
+            t.addData("tri spherical", "az %.1f  el %.1f  rng %.1f",
+                    azDeg(fusedCentre), elDeg(fusedCentre), fusedCentre.len());
+            t.addData("tri spread", "%.2f in (tag-to-tag agreement)", spreadIn);
+            t.addData("sticker facing", "az %.1f  el %.1f  inc %.1f",
+                    azDeg(fusedN), elDeg(fusedN),
+                    Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, viewCosMean)))));
+            t.addData("aim point", "x %.1f  y %.1f  z %.1f",
+                    aimCam.x, aimCam.y, aimCam.z);
+            t.addData("aim angles", "az %.1f  el %.1f  rng %.1f",
+                    azDeg(aimCam), elDeg(aimCam), aimCam.len());
+        } else {
+            t.addData("cluster", "none (age %.0f ms)", ageMs);
+        }
 
         // --- solved shot (turret commands) ---
         AimResult a = lastAim;
         if (a == null) return;
-        t.addData("turretBearing", "%.1f deg", a.bearingDeg);
+        t.addData("turretBearing", "%.1f deg%s", a.bearingDeg,
+                a.coasting ? " (coast)" : "");
         t.addData("elevation", "%.1f deg (%s, %s)", a.elevationDeg, a.model,
                 a.reachable ? "reachable" : "UNREACHABLE");
         t.addData("velocity", "%.0f in/s", a.velocityInS);
         t.addData("range/dh", "%.1f in / %.1f in", a.rangeIn, a.deltaHIn);
         t.addData("flight", "%.2f s  impact %.0f in/s", a.flightTimeS, a.impactSpeedInS);
+    }
+
+    /** Azimuth of a robot-frame vector, degrees (+ = left of forward). */
+    private static double azDeg(Vec3 v) {
+        return Math.toDegrees(Math.atan2(v.y, v.x));
+    }
+
+    /** Elevation of a robot-frame vector, degrees (+ = up). */
+    private static double elDeg(Vec3 v) {
+        return Math.toDegrees(Math.atan2(v.z, Math.hypot(v.x, v.y)));
     }
 
     // ---------------------------------------------------------------------
@@ -859,6 +1156,11 @@ public class limelightbiobuzz {
         int n = c.length;
         if (n == 0) return 0;
         return (n % 2 == 1) ? c[n / 2] : 0.5 * (c[n / 2 - 1] + c[n / 2]);
+    }
+
+    /** Camera axes (X right, Y down, Z forward) -> robot axes (X forward, Y left, Z up). */
+    public static Vec3 camToRobot(Vec3 v) {
+        return new Vec3(v.z, -v.x, -v.y);
     }
 
     // ---- rotation matrix helpers ----
@@ -936,6 +1238,8 @@ public class limelightbiobuzz {
     /** Result of {@link #computeAim()}. */
     public static class AimResult {
         public boolean valid = false;
+        /** True when this solution came from the filter coasting through a vision dropout. */
+        public boolean coasting = false;
         public boolean reachable = true;
         public int tagCount;
         public int clusterStart;
@@ -947,7 +1251,7 @@ public class limelightbiobuzz {
         public double stalenessMs;
         public String model = "";
 
-        /** Camera-relative aim point, robot axes, inches (pre-latency compensation input). */
+        /** Aim point, robot axes, inches, relative to the camera, after latency compensation. */
         public Vec3 aimPointCamera;
 
         /** Bearing of the launch (about gravity), degrees, + = left of robot forward. */

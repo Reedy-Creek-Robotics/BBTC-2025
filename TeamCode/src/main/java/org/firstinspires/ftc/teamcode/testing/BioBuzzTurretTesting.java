@@ -66,9 +66,13 @@ public class BioBuzzTurretTesting extends LinearOpMode {
             telemetry.addData("drag model", bio.USE_DRAG_MODEL ? "on" : "vacuum");
             telemetry.addData("arc", bio.HIGH_ARC ? "high" : "low");
             telemetry.addData("latency comp", bio.COMPENSATE_LATENCY ? "on" : "off");
-            if (aim != null) {
-                telemetry.addData("LOCKED on cluster", "%d (%d tags)",
-                        aim.clusterStart, aim.tagCount);
+            if (bio.isLocked()) {
+                telemetry.addData("LOCKED on cluster", "%d (%d tags)%s",
+                        aim != null ? aim.clusterStart : -1,
+                        aim != null ? aim.tagCount : 0,
+                        bio.isCoasting() ? " (coasting)" : "");
+            } else {
+                telemetry.addData("LOCKED on cluster", "no (%s)", bio.getFuseNote());
             }
             telemetry.update();
 
