@@ -63,6 +63,10 @@ import java.util.Locale;
  *
  * <h3>Calibration TODOs (tune on robot)</h3>
  * <ul>
+ *   <li>WEB UI (required for any of this to work): pipeline 3 > <b>Advanced tab > enable
+ *       "Full 3D"</b>. Without it the Limelight omits the t6t_cs pose array and every
+ *       observation reads as "POSE missing". Also: Input tab = Fiducial Markers, highest
+ *       resolution; Standard tab = AprilTag Classic 36h11, Marker Size 82.55 mm.</li>
  *   <li>{@link #MUZZLE_VELOCITY_IN_S} - measure with a chronograph / flag method.</li>
  *   <li>{@link #DRAG_K} - quadratic drag coefficient (1/in); raise until long shots drop.</li>
  *   <li>{@link #MUZZLE_OFFSET_X_IN} / {@link #MUZZLE_OFFSET_Y_IN} / {@link #MUZZLE_OFFSET_Z_IN}
@@ -155,8 +159,9 @@ public class limelightbiobuzz {
     /** Latency compensation (aim-rotation while the result was in flight). */
     public boolean COMPENSATE_LATENCY = true;
 
-    /** Reject observations viewing the sticker more than this far off-axis (cos of incidence). */
-    public double MIN_VIEW_COS = 0.35;
+    /** Reject observations viewing the sticker more than this far off-axis (cos of incidence).
+     *  0.15 = track up to ~82 deg off-axis, so the hive stays locked from anywhere on the field. */
+    public double MIN_VIEW_COS = 0.15;
 
     /** Per-tag cluster-centre residual (in) above which an observation is dropped (MAD floor). */
     public double OUTLIER_FLOOR_IN = 0.75;
@@ -178,8 +183,9 @@ public class limelightbiobuzz {
     /** Results older than this are not used to correct the filter. */
     public double MAX_MEAS_AGE_MS = 400.0;
 
-    /** Reject a fused solution whose per-tag centre estimates disagree by more than this (in). */
-    public double MAX_SPREAD_IN = 2.0;
+    /** Reject a fused solution whose per-tag centre estimates disagree by more than this (in).
+     *  4 in tolerates long-range pose noise; still catches a genuinely wrong fusion. */
+    public double MAX_SPREAD_IN = 4.0;
 
     /** isLocked() requires at least this fused confidence. */
     public double LOCK_CONFIDENCE = 0.6;
@@ -238,6 +244,10 @@ public class limelightbiobuzz {
     private int usedCount = 0;          // tags that survived outlier rejection
     private int rejectedCount = 0;      // tags dropped by the MAD filter
     private Vec3 fusedCentre = new Vec3(0, 0, 0);   // triangulated cluster centre, robot axes
+    private String lastGoalName = null;             // last goal identity (survives dropouts)
+    private int[] detectedIds = new int[0];         // ALL tag IDs the camera saw this frame
+    private boolean poseMissing = false;            // cluster tag seen but pose null/zero
+    private int clusterSeenCount = 0;               // cluster tags in frame (before filters)
 
     // --- output filter (constant-velocity filter on the fused aim point) ---
     private Vec3 filtPos = null;            // filtered aim point, robot axes, inches
@@ -343,14 +353,24 @@ public class limelightbiobuzz {
         }
 
         // ---- result age: capture + targeting + parse + time since hub parse ----
+        // The hub timestamp may be wall-clock or boot-clock (elapsedRealtime) depending on
+        // firmware. Mixing bases would report an age of YEARS and permanently stale-gate the
+        // output filter, so SHOOT would never calculate - try both bases and take neither
+        // if the delta isn't sane (0..2000 ms).
         double sinceParseMs = 0;
         long tsNanos = res.getControlHubTimeStampNanos();
         if (tsNanos > 0) {
-            sinceParseMs = Math.max(0.0,
-                    System.currentTimeMillis() - tsNanos / 1_000_000.0);
+            double wallMs = (System.currentTimeMillis() * 1_000_000L - tsNanos) / 1_000_000.0;
+            double bootMs = (android.os.SystemClock.elapsedRealtimeNanos() - tsNanos) / 1_000_000.0;
+            if (wallMs >= 0 && wallMs <= 2000) {
+                sinceParseMs = wallMs;
+            } else if (bootMs >= 0 && bootMs <= 2000) {
+                sinceParseMs = bootMs;
+            }
         }
         ageMs = res.getCaptureLatency() + res.getTargetingLatency()
                 + res.getParseLatency() + sinceParseMs;
+        if (!(ageMs >= 0) || ageMs > 5000) ageMs = 0;   // never let garbage gate the filter
         stalenessMs = res.getStaleness();
 
         if (imu != null) {
@@ -361,23 +381,40 @@ public class limelightbiobuzz {
 
         // ---- parse fiducials ----
         obs.clear();
+        detectedIds = new int[0];
+        poseMissing = false;
+        clusterSeenCount = 0;
         List<LLResultTypes.FiducialResult> fids = res.getFiducialResults();
         if (fids != null) {
+            detectedIds = new int[fids.size()];
+            int di = 0;
             for (LLResultTypes.FiducialResult f : fids) {
                 int id = f.getFiducialId();
+                detectedIds[di++] = id;
                 if (clusterStartOf(id) < 0) continue;   // not a BIOBUZZ cluster tag
+                clusterSeenCount++;
 
                 Pose3D pose = f.getTargetPoseCameraSpace();
-                if (pose == null) continue;
+                if (pose == null || pose.getPosition() == null) {
+                    poseMissing = true;
+                    continue;
+                }
 
                 // t6t_cs: target pose in camera space, meters, YPR degrees.
                 double px = pose.getPosition().x * IN_PER_M;
                 double py = pose.getPosition().y * IN_PER_M;
                 double pz = pose.getPosition().z * IN_PER_M;
                 Vec3 p = new Vec3(px, py, pz);
-                if (p.lenSq() < 1e-6) continue;
+                if (p.lenSq() < 1e-6) {
+                    poseMissing = true;      // pose present but all zeros
+                    continue;
+                }
 
                 YawPitchRollAngles ypr = pose.getOrientation();
+                if (ypr == null) {
+                    poseMissing = true;
+                    continue;
+                }
                 Mat3 rot = rotZ(Math.toRadians(ypr.getYaw(AngleUnit.DEGREES)))
                         .mul(rotY(Math.toRadians(ypr.getPitch(AngleUnit.DEGREES))))
                         .mul(rotX(Math.toRadians(ypr.getRoll(AngleUnit.DEGREES))));
@@ -409,7 +446,14 @@ public class limelightbiobuzz {
         parsedCount = obs.size();
         if (obs.isEmpty()) {
             fusedValid = false;
-            fuseNote = "no BIOBUZZ cluster tags in frame";
+            if (poseMissing) {
+                fuseNote = "POSE off - web UI > pipeline 3 > Advanced tab > enable "
+                        + "'Full 3D' (Marker Size 82.55 mm, highest res)";
+            } else if (clusterSeenCount > 0) {
+                fuseNote = "cluster tags seen but all rejected (view angle/pose)";
+            } else {
+                fuseNote = "no BIOBUZZ cluster tags in frame";
+            }
             return false;
         }
 
@@ -418,18 +462,23 @@ public class limelightbiobuzz {
     }
 
     /**
-     * Fuse all observations of the dominant cluster into one aim point.
+     * Fuse the visible BIOBUZZ clusters into one aim point, best cluster first.
      *
      * <p>Strategy: u = pose X column, sign-checked against the physical tag layout
      * (u_geo = normalize(p_higherID - p_lowerID)) so u always runs with increasing tag ID.
      * n = sign-fixed pose Z column (toward camera). v = n x u (printed up).
      * Per-tag implied cluster centre = tagPos - TAG_U*u; median + MAD outlier rejection;
      * area-weighted mean; aim = centre + (AIM_U, AIM_V, AIM_N) in (u, v, n).</p>
+     *
+     * <p>Candidates are ranked by tag count (previous cluster wins ties) and tried in order,
+     * so a bad frame on one cell falls back to another visible cell instead of dropping.</p>
      */
     private void fuse() {
-        // ---- dominant cluster (most tags, tie-break by total area) ----
-        int bestStart = -1, bestCount = 0;
-        double bestArea = 0;
+        // ---- rank visible clusters: most tags first, previous cluster first on ties ----
+        int[] starts = new int[CLUSTERS.length];
+        int[] cnts = new int[CLUSTERS.length];
+        double[] areas = new double[CLUSTERS.length];
+        int nCand = 0;
         for (int[] cl : CLUSTERS) {
             int cnt = 0;
             double area = 0;
@@ -439,30 +488,54 @@ public class limelightbiobuzz {
                     area += t.area;
                 }
             }
-            if (cnt > bestCount || (cnt == bestCount && area > bestArea)) {
-                bestCount = cnt;
-                bestArea = area;
-                bestStart = cl[0];
+            if (cnt > 0) {
+                starts[nCand] = cl[0];
+                cnts[nCand] = cnt;
+                areas[nCand] = area;
+                nCand++;
             }
         }
-        // Hysteresis: if the previously-fused cluster is still visible and within one tag
-        // of the leader, stay with it - prevents cell-to-cell flicker when counts tie.
-        if (clusterStart >= 0 && bestStart != clusterStart && bestCount > 0) {
-            int prevCnt = 0;
-            for (TagObs t : obs) {
-                if (t.id >= clusterStart && t.id <= clusterStart + 3) prevCnt++;
-            }
-            if (prevCnt > 0 && prevCnt >= bestCount - 1) {
-                bestStart = clusterStart;
-                bestCount = prevCnt;
-            }
-        }
-        if (bestStart < 0) {
+        if (nCand == 0) {
             fusedValid = false;
-            fuseNote = "no dominant cluster";
+            fuseNote = "no cluster tags to fuse";
             return;
         }
+        // insertion sort: count desc (previous cluster breaks ties), then total area desc
+        for (int i = 1; i < nCand; i++) {
+            int s = starts[i], c = cnts[i];
+            double a = areas[i];
+            int j = i - 1;
+            while (j >= 0 && rankFirst(s, c, a, starts[j], cnts[j], areas[j])) {
+                starts[j + 1] = starts[j];
+                cnts[j + 1] = cnts[j];
+                areas[j + 1] = areas[j];
+                j--;
+            }
+            starts[j + 1] = s;
+            cnts[j + 1] = c;
+            areas[j + 1] = a;
+        }
 
+        // ---- try candidates best-first: first cluster that fuses cleanly wins. If the
+        // ---- dominant one fails (bad pose, partial view), take whichever other cell is
+        // ---- usable this frame instead of dropping the solution entirely. ----
+        for (int i = 0; i < nCand; i++) {
+            if (tryFuseCluster(starts[i])) return;
+        }
+        fusedValid = false;
+        // fuseNote already carries the most informative failure from the last attempt
+    }
+
+    /** Ranking: more tags first; on ties the previously tracked cluster wins, then bigger area. */
+    private boolean rankFirst(int sA, int cA, double aA, int sB, int cB, double aB) {
+        if (cA != cB) return cA > cB;
+        if (sA == clusterStart) return true;
+        if (sB == clusterStart) return false;
+        return aA > aB;
+    }
+
+    /** Attempt to fuse one cluster's tags into an aim point; returns true on success. */
+    private boolean tryFuseCluster(int bestStart) {
         accepted.clear();
         for (TagObs t : obs) {
             if (t.id >= bestStart && t.id <= bestStart + 3) accepted.add(t);
@@ -474,7 +547,7 @@ public class limelightbiobuzz {
         if (nSum.lenSq() < 1e-9) {
             fusedValid = false;
             fuseNote = "degenerate sticker normal";
-            return;
+            return false;
         }
         Vec3 n = nSum.norm();
 
@@ -506,7 +579,7 @@ public class limelightbiobuzz {
         if (u.lenSq() < 1e-9) {
             fusedValid = false;
             fuseNote = "degenerate row axis";
-            return;
+            return false;
         }
         u = u.norm();
         Vec3 v = n.cross(u);
@@ -556,7 +629,7 @@ public class limelightbiobuzz {
             } else {
                 fusedValid = false;
                 fuseNote = "weight failure";
-                return;
+                return false;
             }
         }
         Vec3 centre = cSum.scale(1.0 / wSum);
@@ -568,7 +641,7 @@ public class limelightbiobuzz {
         if (accepted.size() > 1 && spreadIn > MAX_SPREAD_IN) {
             fusedValid = false;
             fuseNote = "spread " + spreadIn + " in too high";
-            return;
+            return false;
         }
 
         // ---- aim point: cluster centre + fixed offset in cluster frame ----
@@ -582,6 +655,7 @@ public class limelightbiobuzz {
         fusedV = v;
         fusedN = n;
         clusterStart = bestStart;
+        lastGoalName = clusterName(bestStart);
         seenIds = new int[accepted.size()];
         for (int i = 0; i < accepted.size(); i++) seenIds[i] = accepted.get(i).id;
 
@@ -596,6 +670,7 @@ public class limelightbiobuzz {
                 ? ("ok - rejected " + rejectedCount + "/" + m)
                 : ("ok - all " + m + " agree");
         fusedValid = true;
+        return true;
     }
 
     // ---------------------------------------------------------------------
@@ -650,6 +725,9 @@ public class limelightbiobuzz {
         r.tagCount = accepted.size();
         r.tagIds = seenIds.clone();
         r.clusterStart = clusterStart;
+        String gName = clusterName(clusterStart);
+        r.goalName = (gName != null) ? gName
+                : (lastGoalName != null ? lastGoalName : "");
         r.ageMs = ageMs;
         r.stalenessMs = stalenessMs;
         r.confidence = confidence;
@@ -1027,12 +1105,13 @@ public class limelightbiobuzz {
     /** Multi-line debug summary for telemetry. */
     public String debugString() {
         if (!fusedValid) {
-            return String.format(Locale.US, "BB: no cluster (age %.0f ms)", ageMs);
+            return String.format(Locale.US, "BB: no cluster (age %.0f ms)%s", ageMs,
+                    lastGoalName != null ? " - last goal " + lastGoalName : "");
         }
         AimResult a = lastAim;
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format(Locale.US, "BB cluster %d  tags %d  conf %.2f%n",
-                clusterStart, accepted.size(), confidence));
+        sb.append(String.format(Locale.US, "BB %s cluster %d  tags %d  conf %.2f%n",
+                clusterName(clusterStart), clusterStart, accepted.size(), confidence));
         sb.append(String.format(Locale.US, " ids:"));
         for (int id : seenIds) sb.append(' ').append(id);
         sb.append(String.format(Locale.US, "%n aim cam %.1f %.1f %.1f in%n",
@@ -1058,12 +1137,47 @@ public class limelightbiobuzz {
      * which tags, fusion quality, the turret bearing command, and the launch solution.</p>
      */
     public void addTelemetry(Telemetry t) {
+        AimResult a = lastAim;
+
         t.addLine("-- BioBuzz --");
+
+        // --- WHAT we are lined up on: alliance + hive side of the goal ---
+        String goal = fusedValid ? clusterName(clusterStart) : lastGoalName;
+        if (goal != null) {
+            t.addData("GOAL", "%s (tags %d-%d)%s", goal, clusterStart, clusterStart + 3,
+                    coasting ? "  [coasting]" : "");
+        } else {
+            t.addData("GOAL", "not seen yet");
+        }
+
+        // --- THE SHOT: launch angle to shoot, front and centre ---
+        if (a != null) {
+            t.addData("SHOOT angle", "%.1f deg elevation  %.1f deg bearing",
+                    a.elevationDeg, a.bearingDeg);
+            t.addData("SHOOT velocity", "%.0f in/s  range %.1f in%s",
+                    a.velocityInS, a.rangeIn,
+                    a.reachable ? "" : "  UNREACHABLE");
+        } else {
+            t.addData("SHOOT angle", "no solution yet - %s", fuseNote);
+        }
+
+        // --- what the camera actually sees this frame (ANY tag ID, not just ours).
+        // If this is empty, the problem is the camera/pipeline, not the solver. ---
+        StringBuilder seenAll = new StringBuilder();
+        if (detectedIds.length == 0) seenAll.append("nothing");
+        for (int i = 0; i < detectedIds.length; i++) {
+            if (i > 0) seenAll.append(' ');
+            seenAll.append(detectedIds[i]);
+        }
+        t.addData("detected", seenAll.toString());
+
         t.addData("pipeline", "camera %d / pinned %d", lastPipelineIdx, managedPipeline);
         t.addData("fuse", "%s  (parsed %d, used %d, rejected %d)",
                 fuseNote, parsedCount, usedCount, rejectedCount);
         t.addData("latency", "age %.0f ms  stale %.0f ms  yawRate %.2f rad/s",
                 ageMs, stalenessMs, yawRate);
+        t.addData("robot tilt", "pitch %+.1f  roll %+.1f deg (shot gravity-aligned)",
+                Math.toDegrees(pitchRad), Math.toDegrees(rollRad));
         if (filterInit) {
             t.addData("lock", "%s%s  az %.1f  el %.1f  rng %.1f  rate %.1f deg/s",
                     isLocked() ? "LOCKED" : "weak",
@@ -1090,8 +1204,9 @@ public class limelightbiobuzz {
             // landed and how well the independent measurements agreed. ---
             StringBuilder ids = new StringBuilder();
             for (int id : seenIds) ids.append(id).append(' ');
-            t.addData("cluster", "%d  tags %d  conf %.2f  ids %s",
-                    clusterStart, accepted.size(), confidence, ids.toString().trim());
+            t.addData("cluster", "%s %d  tags %d  conf %.2f  ids %s",
+                    clusterName(clusterStart), clusterStart,
+                    accepted.size(), confidence, ids.toString().trim());
             t.addData("tri centre", "x %.1f  y %.1f  z %.1f",
                     fusedCentre.x, fusedCentre.y, fusedCentre.z);
             t.addData("tri spherical", "az %.1f  el %.1f  rng %.1f",
@@ -1100,6 +1215,13 @@ public class limelightbiobuzz {
             t.addData("sticker facing", "az %.1f  el %.1f  inc %.1f",
                     azDeg(fusedN), elDeg(fusedN),
                     Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, viewCosMean)))));
+            // Tilt: sticker normal measured against TRUE horizon (gravity from the IMU).
+            // The cell is installed tilted (mouth up toward the field); a value far from
+            // the normal install angle means that cell is popped out or you're seeing
+            // a different sticker.
+            Vec3 nG = rotY(pitchRad).mul(rotX(rollRad)).applyTo(fusedN);
+            t.addData("cell tilt", "%+.1f deg vs horizon (sticker normal)",
+                    Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, nG.z)))));
             t.addData("aim point", "x %.1f  y %.1f  z %.1f",
                     aimCam.x, aimCam.y, aimCam.z);
             t.addData("aim angles", "az %.1f  el %.1f  rng %.1f",
@@ -1108,15 +1230,10 @@ public class limelightbiobuzz {
             t.addData("cluster", "none (age %.0f ms)", ageMs);
         }
 
-        // --- solved shot (turret commands) ---
-        AimResult a = lastAim;
+        // --- ballistics detail ---
         if (a == null) return;
-        t.addData("turretBearing", "%.1f deg%s", a.bearingDeg,
-                a.coasting ? " (coast)" : "");
-        t.addData("elevation", "%.1f deg (%s, %s)", a.elevationDeg, a.model,
-                a.reachable ? "reachable" : "UNREACHABLE");
-        t.addData("velocity", "%.0f in/s", a.velocityInS);
-        t.addData("range/dh", "%.1f in / %.1f in", a.rangeIn, a.deltaHIn);
+        t.addData("model", "%s%s  dh %.1f in", a.model,
+                a.coasting ? " (coast)" : "", a.deltaHIn);
         t.addData("flight", "%.2f s  impact %.0f in/s", a.flightTimeS, a.impactSpeedInS);
     }
 
@@ -1140,6 +1257,21 @@ public class limelightbiobuzz {
             if (id >= cl[0] && id <= cl[3]) return cl[0];
         }
         return -1;
+    }
+
+    /**
+     * Human-readable goal identity for a cluster start ID: which alliance's hive side
+     * the cell is on (30 = RED SCORING, 34 = RED AUDIENCE, 38 = BLUE AUDIENCE,
+     * 42 = BLUE SCORING), or null for an unknown cluster.
+     */
+    public static String clusterName(int clusterStartId) {
+        switch (clusterStartId) {
+            case 30: return "RED SCORING";
+            case 34: return "RED AUDIENCE";
+            case 38: return "BLUE AUDIENCE";
+            case 42: return "BLUE SCORING";
+            default: return null;
+        }
     }
 
     private static double medianCoord(Vec3[] pts, int axis) {
@@ -1241,6 +1373,9 @@ public class limelightbiobuzz {
         /** True when this solution came from the filter coasting through a vision dropout. */
         public boolean coasting = false;
         public boolean reachable = true;
+        /** Which goal this solution aims at: RED SCORING / RED AUDIENCE / BLUE AUDIENCE /
+         *  BLUE SCORING ("" if unknown). */
+        public String goalName = "";
         public int tagCount;
         public int clusterStart;
         public int[] tagIds = new int[0];
