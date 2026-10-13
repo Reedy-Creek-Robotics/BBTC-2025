@@ -190,6 +190,12 @@ public class limelightbiobuzz {
     /** isLocked() requires at least this fused confidence. */
     public double LOCK_CONFIDENCE = 0.6;
 
+    /** Nominal install angle of the cell sticker normal vs horizon (deg, negative = downward). */
+    public double NOMINAL_CELL_TILT_DEG = -60.0;
+
+    /** How far the cell normal may drift from nominal before reporting TIPPED (deg). */
+    public double TIP_TOLERANCE_DEG = 10.0;
+
     /**
      * Pipeline index holding the BIOBUZZ AprilTags config (web UI: pipeline 3).
      * The solver keeps the camera pinned to it and re-selects it if anything
@@ -1131,110 +1137,32 @@ public class limelightbiobuzz {
     }
 
     /**
-     * Push full diagnostics to telemetry (testing/tuning).
-     *
-     * <p>Called every loop. Everything a turret-lock test needs: whether we have the cluster,
-     * which tags, fusion quality, the turret bearing command, and the launch solution.</p>
+     * Driver-station display: exactly three lines - which hive, whether it's tipped,
+     * and the shooting angle. Full diagnostics remain available via {@link #debugString()}.
      */
     public void addTelemetry(Telemetry t) {
-        AimResult a = lastAim;
-
-        t.addLine("-- BioBuzz --");
-
-        // --- WHAT we are lined up on: alliance + hive side of the goal ---
+        // 1) which hive
         String goal = fusedValid ? clusterName(clusterStart) : lastGoalName;
-        if (goal != null) {
-            t.addData("GOAL", "%s (tags %d-%d)%s", goal, clusterStart, clusterStart + 3,
-                    coasting ? "  [coasting]" : "");
-        } else {
-            t.addData("GOAL", "not seen yet");
-        }
+        t.addData("HIVE", goal != null ? goal : "not seen");
 
-        // --- THE SHOT: launch angle to shoot, front and centre ---
-        if (a != null) {
-            t.addData("SHOOT angle", "%.1f deg elevation  %.1f deg bearing",
-                    a.elevationDeg, a.bearingDeg);
-            t.addData("SHOOT velocity", "%.0f in/s  range %.1f in%s",
-                    a.velocityInS, a.rangeIn,
-                    a.reachable ? "" : "  UNREACHABLE");
-        } else {
-            t.addData("SHOOT angle", "no solution yet - %s", fuseNote);
-        }
-
-        // --- what the camera actually sees this frame (ANY tag ID, not just ours).
-        // If this is empty, the problem is the camera/pipeline, not the solver. ---
-        StringBuilder seenAll = new StringBuilder();
-        if (detectedIds.length == 0) seenAll.append("nothing");
-        for (int i = 0; i < detectedIds.length; i++) {
-            if (i > 0) seenAll.append(' ');
-            seenAll.append(detectedIds[i]);
-        }
-        t.addData("detected", seenAll.toString());
-
-        t.addData("pipeline", "camera %d / pinned %d", lastPipelineIdx, managedPipeline);
-        t.addData("fuse", "%s  (parsed %d, used %d, rejected %d)",
-                fuseNote, parsedCount, usedCount, rejectedCount);
-        t.addData("latency", "age %.0f ms  stale %.0f ms  yawRate %.2f rad/s",
-                ageMs, stalenessMs, yawRate);
-        t.addData("robot tilt", "pitch %+.1f  roll %+.1f deg (shot gravity-aligned)",
-                Math.toDegrees(pitchRad), Math.toDegrees(rollRad));
-        if (filterInit) {
-            t.addData("lock", "%s%s  az %.1f  el %.1f  rng %.1f  rate %.1f deg/s",
-                    isLocked() ? "LOCKED" : "weak",
-                    coasting ? " COAST" : "",
-                    getBearingDeg(), getElevationDeg(), getRangeIn(),
-                    getBearingRateDegPerSec());
-            t.addData("filter dev", "%.2f in (raw vs filtered)", getFilterDeviationIn());
-        } else {
-            t.addData("lock", "no fix (filter not acquired)");
-        }
-
-        // --- raw per-tag angles (robot axes): triangulation inputs. Shown even when
-        // fusion fails, so you can see what the detector actually has to work with. ---
-        for (TagObs o : obs) {
-            t.addData("T" + o.id, "az %6.1f  el %5.1f  rng %5.1f  inc %4.1f  a %.0f",
-                    azDeg(o.p), elDeg(o.p), o.p.len(),
-                    Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, o.viewCos)))),
-                    o.area);
-        }
-
-        if (fusedValid) {
-            // --- triangulation result: each tag's pose (minus its known sticker offset)
-            // independently points at the same cluster centre; these lines show where it
-            // landed and how well the independent measurements agreed. ---
-            StringBuilder ids = new StringBuilder();
-            for (int id : seenIds) ids.append(id).append(' ');
-            t.addData("cluster", "%s %d  tags %d  conf %.2f  ids %s",
-                    clusterName(clusterStart), clusterStart,
-                    accepted.size(), confidence, ids.toString().trim());
-            t.addData("tri centre", "x %.1f  y %.1f  z %.1f",
-                    fusedCentre.x, fusedCentre.y, fusedCentre.z);
-            t.addData("tri spherical", "az %.1f  el %.1f  rng %.1f",
-                    azDeg(fusedCentre), elDeg(fusedCentre), fusedCentre.len());
-            t.addData("tri spread", "%.2f in (tag-to-tag agreement)", spreadIn);
-            t.addData("sticker facing", "az %.1f  el %.1f  inc %.1f",
-                    azDeg(fusedN), elDeg(fusedN),
-                    Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, viewCosMean)))));
-            // Tilt: sticker normal measured against TRUE horizon (gravity from the IMU).
-            // The cell is installed tilted (mouth up toward the field); a value far from
-            // the normal install angle means that cell is popped out or you're seeing
-            // a different sticker.
+        // 2) tipped or not (cell normal vs its nominal install angle, gravity-referenced)
+        if (fusedValid || coasting) {
             Vec3 nG = rotY(pitchRad).mul(rotX(rollRad)).applyTo(fusedN);
-            t.addData("cell tilt", "%+.1f deg vs horizon (sticker normal)",
-                    Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, nG.z)))));
-            t.addData("aim point", "x %.1f  y %.1f  z %.1f",
-                    aimCam.x, aimCam.y, aimCam.z);
-            t.addData("aim angles", "az %.1f  el %.1f  rng %.1f",
-                    azDeg(aimCam), elDeg(aimCam), aimCam.len());
+            double tilt = Math.toDegrees(
+                    Math.asin(Math.max(-1, Math.min(1, nG.z))));
+            boolean tipped = Math.abs(tilt - NOMINAL_CELL_TILT_DEG) > TIP_TOLERANCE_DEG;
+            t.addData("TIPPED", tipped ? "YES (%.0f deg)" : "no (%.0f deg)", tilt);
         } else {
-            t.addData("cluster", "none (age %.0f ms)", ageMs);
+            t.addData("TIPPED", "-");
         }
 
-        // --- ballistics detail ---
-        if (a == null) return;
-        t.addData("model", "%s%s  dh %.1f in", a.model,
-                a.coasting ? " (coast)" : "", a.deltaHIn);
-        t.addData("flight", "%.2f s  impact %.0f in/s", a.flightTimeS, a.impactSpeedInS);
+        // 3) shooting angle
+        AimResult a = lastAim;
+        if (a != null) {
+            t.addData("SHOOT", "%.1f deg", a.elevationDeg);
+        } else {
+            t.addData("SHOOT", "-");
+        }
     }
 
     /** Azimuth of a robot-frame vector, degrees (+ = left of forward). */

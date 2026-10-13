@@ -52,28 +52,14 @@ public class BioBuzzTurretTesting extends LinearOpMode {
         while (opModeIsActive()) {
             // --- read solver ---
             bio.update();
-            limelightbiobuzz.AimResult aim = bio.computeAim();
+            bio.computeAim();
 
-            // --- live tuning controls ---
+            // --- live tuning controls (gamepad only, not shown on screen) ---
             handleTuningButtons();
 
-            // --- telemetry ---
+            // --- telemetry: hive / tipped / shoot angle ---
             telemetry.clear();
             bio.addTelemetry(telemetry);
-            telemetry.addLine("-- tuning --");
-            telemetry.addData("v0", "%.0f in/s", bio.MUZZLE_VELOCITY_IN_S);
-            telemetry.addData("drag k", "%.5f", bio.DRAG_K);
-            telemetry.addData("drag model", bio.USE_DRAG_MODEL ? "on" : "vacuum");
-            telemetry.addData("arc", bio.HIGH_ARC ? "high" : "low");
-            telemetry.addData("latency comp", bio.COMPENSATE_LATENCY ? "on" : "off");
-            if (bio.isLocked()) {
-                telemetry.addData("LOCKED on cluster", "%d (%d tags)%s",
-                        aim != null ? aim.clusterStart : -1,
-                        aim != null ? aim.tagCount : 0,
-                        bio.isCoasting() ? " (coasting)" : "");
-            } else {
-                telemetry.addData("LOCKED on cluster", "no (%s)", bio.getFuseNote());
-            }
             telemetry.update();
 
             idle();
