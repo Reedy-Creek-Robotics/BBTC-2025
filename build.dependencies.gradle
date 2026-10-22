@@ -2,6 +2,10 @@ repositories {
     google()
     mavenCentral()
     maven { url = 'https://maven.brott.dev/' }
+    maven { url = "https://mymaven.bylazar.com/releases" }
+    maven { url = "https://mymaven.bylazar.com/releases" }
+
+
 }
 
 dependencies {
@@ -14,6 +18,12 @@ dependencies {
     implementation 'org.firstinspires.ftc:Hardware:11.0.0'
     implementation 'org.firstinspires.ftc:FtcCommon:11.0.0'
     implementation 'org.firstinspires.ftc:Vision:11.0.0'
+    implementation 'com.pedropathing:ftc:2.1.2'
+    implementation 'com.pedropathing:telemetry:1.0.0'
+    implementation 'com.bylazar:fullpanels:1.0.12'
+    implementation "com.bylazar:configurables:1.0.5"
+
+
 
     // ROADRUNNER 1.0 + DASHBOARD
     implementation "com.acmerobotics.roadrunner:ftc:0.1.25"
