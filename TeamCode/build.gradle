@@ -24,6 +24,7 @@ android {
 }
 
 dependencies {
+    testImplementation 'junit:junit:4.13.2'
     implementation project(':FtcRobotController')
     implementation 'org.openftc:easyopencv:1.6.2'
 

@@ -65,7 +65,7 @@ public class Camera {
             double x = pose.getPosition().x;
             double y = pose.getPosition().y;
             double z = pose.getPosition().z;
-            distance = Math.sqrt(x*x + y*y + z*z) * 39.37; // Meters to Inches
+            distance = VisionMath.distanceInchesFromMeters(x, y, z);
 
             // Rotation (Yaw)
             this.yaw = pose.getOrientation().getYaw();

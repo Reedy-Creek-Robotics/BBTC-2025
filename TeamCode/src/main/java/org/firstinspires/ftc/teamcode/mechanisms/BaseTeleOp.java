@@ -116,27 +116,15 @@ public abstract class BaseTeleOp extends LinearOpMode {
     }
 
     protected double applySlewRate(double current, double target) {
-        double delta = target - current;
-        if (delta > 0) delta = Math.min(delta, MAX_ACCEL);
-        else delta = Math.max(delta, -MAX_DECEL);
-        return current + delta;
+        return DriveMath.limitChange(current, target, MAX_ACCEL, MAX_DECEL);
     }
 
     private void drive(double forward, double right, double rotate) {
-        double fl = forward + right + rotate;
-        double fr = forward - right - rotate;
-        double bl = forward - right + rotate;
-        double br = forward + right - rotate;
-
-        double maxPower = Math.max(1.0, Math.max(
-                Math.max(Math.abs(fl), Math.abs(fr)),
-                Math.max(Math.abs(bl), Math.abs(br))
-        ));
-
-        flmotor.setPower(fl / maxPower);
-        frmotor.setPower(fr / maxPower);
-        blmotor.setPower(bl / maxPower);
-        brmotor.setPower(br / maxPower);
+        DriveMath.WheelPowers powers = DriveMath.mecanumPowers(forward, right, rotate);
+        flmotor.setPower(powers.frontLeft);
+        frmotor.setPower(powers.frontRight);
+        blmotor.setPower(powers.backLeft);
+        brmotor.setPower(powers.backRight);
     }
 
     protected void handleDrive(double forward, double right) {
