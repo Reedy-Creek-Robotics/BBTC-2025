@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ftc-robot-${{ github.event.pull_request.number }}
+  # A title/body-only edit must not cancel an active build for this PR.
+  group: ftc-robot-${{ github.event.pull_request.number }}-${{ github.event.action == 'edited' && github.event.changes.base == null && github.run_id || 'build' }}
   cancel-in-progress: true
 
 jobs:
