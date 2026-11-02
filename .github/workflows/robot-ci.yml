@@ -30,12 +30,16 @@ jobs:
           - check: lint
             name: FTC Lint
     env:
-      ANDROID_HOME: ${{ runner.temp }}/ftc-android-sdk
-      ANDROID_SDK_ROOT: ${{ runner.temp }}/ftc-android-sdk
-      GRADLE_USER_HOME: ${{ runner.temp }}/ftc-gradle
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
+      - name: Use fresh toolchain and dependency directories
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$RUNNER_TEMP/ftc-android-sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$RUNNER_TEMP/ftc-android-sdk" >> "$GITHUB_ENV"
+          echo "GRADLE_USER_HOME=$RUNNER_TEMP/ftc-gradle" >> "$GITHUB_ENV"
+
       - name: Check out the candidate merge
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
