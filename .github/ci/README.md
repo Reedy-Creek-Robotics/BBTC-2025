@@ -25,3 +25,6 @@ and an up-to-date-branch policy only after reviewing and merging this workflow.
 CI source/report data are observations, not proof of hardware behavior or
 competition-rule compliance. Changes to this workflow or its check driver need
 mentor review; the local reviewer also verifies their trusted fingerprints.
+
+Title/body-only edits use a separate concurrency group, so their skipped jobs
+do not cancel a real build already running for the same PR.
