@@ -12,13 +12,13 @@ public class Drivetrain {
 
     public void init(HardwareMap hardwareMap){
         // Hardware mapping for motors
-        flmotor = BlocksOpModeCompanion.hardwareMap.get(DcMotor.class, "frontLeftMotor");
-        blmotor = BlocksOpModeCompanion.hardwareMap.get(DcMotor.class, "backLeftMotor");
-        frmotor = BlocksOpModeCompanion.hardwareMap.get(DcMotor.class, "frontRightMotor");
-        brmotor = BlocksOpModeCompanion.hardwareMap.get(DcMotor.class, "backRightMotor");
+        flmotor = hardwareMap.get(DcMotor.class, "frontLeftMotor");
+        blmotor = hardwareMap.get(DcMotor.class, "backLeftMotor");
+        frmotor = hardwareMap.get(DcMotor.class, "frontRightMotor");
+        brmotor = hardwareMap.get(DcMotor.class, "backRightMotor");
 
         // Hardware mapping for Pinpoint odometry (adjust string name if needed)
-        pinpoint = BlocksOpModeCompanion.hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         // Motor directions
         flmotor.setDirection(DcMotor.Direction.REVERSE);
