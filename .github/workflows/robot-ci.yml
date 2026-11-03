@@ -1,0 +1,127 @@
+name: FTC Robot Verification
+
+on:
+  pull_request:
+    branches: [15707_Main_Coding_2026-2027]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  # A title/body-only edit must not cancel an active build for this PR.
+  group: ftc-robot-${{ github.event.pull_request.number }}-${{ github.event.action == 'edited' && github.event.changes.base == null && github.run_id || 'build' }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    # Retargeting needs a build; editing only a title/body does not.
+    if: github.event.action != 'edited' || github.event.changes.base != null
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: compile
+            name: FTC Compile
+          - check: unit_tests
+            name: FTC Unit Tests
+          - check: lint
+            name: FTC Lint
+    env:
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: Use fresh toolchain and dependency directories
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$RUNNER_TEMP/ftc-android-sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$RUNNER_TEMP/ftc-android-sdk" >> "$GITHUB_ENV"
+          echo "GRADLE_USER_HOME=$RUNNER_TEMP/ftc-gradle" >> "$GITHUB_ENV"
+
+      - name: Check out the candidate merge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Verify merged PR source
+        id: source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess
+          def git(ref):
+              return subprocess.check_output(['git', 'rev-parse', ref], text=True).strip()
+          source = {'head': git('HEAD^2'), 'base': git('HEAD^1'), 'merge': git('HEAD')}
+          assert all(re.fullmatch('[0-9a-f]{40}', value) for value in source.values())
+          assert source['head'] == os.environ['PR_HEAD_SHA']
+          assert source['base'] == os.environ['PR_BASE_SHA']
+          assert source['merge'] == os.environ['GITHUB_SHA']
+          assert os.environ['GITHUB_REPOSITORY'] == 'Reedy-Creek-Robotics/BBTC-2025'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              for key, value in source.items():
+                  output.write(f'{key}={value}\n')
+          PY
+
+      - name: "Source: head=${{ steps.source.outputs.head }} base=${{ steps.source.outputs.base }} merge=${{ steps.source.outputs.merge }}"
+        run: 'true'
+
+      - name: Verify the fixed check driver
+        run: echo '31b9eb80b7782c423be512be86f5232d9d7cd123af0977908d3192e4f721bafa  .github/ci/verify.py' | sha256sum --check --strict
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install the Android build toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          curl --fail --location --retry 3 https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -o "$RUNNER_TEMP/ftc-sdk.zip"
+          echo "7ec965280a073311c339e571cd5de778b9975026cfcbe79f2b1cdcb1e15317ee  $RUNNER_TEMP/ftc-sdk.zip" | sha256sum --check --strict
+          unzip -q "$RUNNER_TEMP/ftc-sdk.zip" -d "$ANDROID_HOME/cmdline-tools"
+          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/19.0"
+          python3 -c 'print("y\n" * 100)' | "$ANDROID_HOME/cmdline-tools/19.0/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+          "$ANDROID_HOME/cmdline-tools/19.0/bin/sdkmanager" --sdk_root="$ANDROID_HOME" 'platforms;android-34' 'build-tools;35.0.0' 'platform-tools'
+          java -version
+
+      - name: Run the robot check
+        id: verify
+        continue-on-error: true
+        env:
+          CHECK: ${{ matrix.check }}
+        run: python3 .github/ci/verify.py "$CHECK"
+
+      - name: "Unit tests: ${{ steps.verify.outputs.tests }} total, ${{ steps.verify.outputs.failures }} failures, ${{ steps.verify.outputs.errors }} errors, ${{ steps.verify.outputs.skipped }} skipped"
+        if: always() && !cancelled() && matrix.check == 'unit_tests' && steps.verify.outputs.status != ''
+        run: 'true'
+
+      - name: "Lint: ${{ steps.verify.outputs.lint_warnings }} warnings, ${{ steps.verify.outputs.lint_errors }} errors"
+        if: always() && !cancelled() && matrix.check == 'lint' && steps.verify.outputs.status != ''
+        run: 'true'
+
+      - name: "Result: ${{ steps.verify.outputs.status }}"
+        if: always() && !cancelled() && steps.verify.outputs.status != ''
+        run: 'true'
+
+      - name: Save bounded logs and XML reports
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ftc-${{ matrix.check }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-results/${{ matrix.check }}/
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: Enforce the check result
+        if: always() && !cancelled()
+        env:
+          CHECK_OUTCOME: ${{ steps.verify.outcome }}
+        run: test "$CHECK_OUTCOME" = success
