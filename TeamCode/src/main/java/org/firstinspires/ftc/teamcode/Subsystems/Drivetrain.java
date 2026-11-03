@@ -49,23 +49,11 @@ public class Drivetrain {
      * Core drive mixing method (Robot-Relative)
      */
     public void driveRobotRelative(double forward, double strafe, double rotate) {
-        double frontLeftPower = forward + strafe + rotate;
-        double backLeftPower = forward - strafe + rotate;
-        double frontRightPower = forward - strafe - rotate;
-        double backRightPower = forward + strafe - rotate;
-
-        double maxPower = 1.0;
-        double maxSpeed = 1.0;
-
-        maxPower = Math.max(maxPower, Math.abs(frontLeftPower));
-        maxPower = Math.max(maxPower, Math.abs(backLeftPower));
-        maxPower = Math.max(maxPower, Math.abs(frontRightPower));
-        maxPower = Math.max(maxPower, Math.abs(backRightPower));
-
-        flmotor.setPower(maxSpeed * (frontLeftPower / maxPower));
-        blmotor.setPower(maxSpeed * (backLeftPower / maxPower));
-        frmotor.setPower(maxSpeed * (frontRightPower / maxPower));
-        brmotor.setPower(maxSpeed * (backRightPower / maxPower));
+        DriveMath.WheelPowers powers = DriveMath.mecanumPowers(forward, strafe, rotate);
+        flmotor.setPower(powers.frontLeft);
+        blmotor.setPower(powers.backLeft);
+        frmotor.setPower(powers.frontRight);
+        brmotor.setPower(powers.backRight);
     }
 
 
