@@ -28,3 +28,10 @@ mentor review; the local reviewer also verifies their trusted fingerprints.
 
 Title/body-only edits use a separate concurrency group, so their skipped jobs
 do not cancel a real build already running for the same PR.
+
+The revision gate verifies the candidate merge's first parent against the current
+fixed destination branch on the public remote. PR event `base.sha` may be stale
+for an older open PR after the target advances. A stale event value is disclosed
+as a notice; reports use the actual tested base. A candidate merge against an
+older target still fails with a rerun message. Regression tests exercise both
+cases, including PR #35's original revisions.
