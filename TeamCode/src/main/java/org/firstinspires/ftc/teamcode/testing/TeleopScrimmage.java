@@ -55,7 +55,7 @@ public class TeleopScrimmage extends OpMode {
         Shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         // Set motor run modes
-        Shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        Shooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         blmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
