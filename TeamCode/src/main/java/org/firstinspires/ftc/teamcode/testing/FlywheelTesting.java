@@ -44,10 +44,10 @@ public class FlywheelTesting extends LinearOpMode {
             boolean currentDpadDown = gamepad1.dpad_down;
 
             if (currentDpadUp && !lastDpadUpState) {
-                flywheelPower = Math.min(1.0, flywheelPower + 0.1); // Increase by 5%, max 1.0
+                flywheelPower = Math.min(1.0, flywheelPower + 0.05); // Increase by 5%, max 1.0
             }
             if (currentDpadDown && !lastDpadDownState) {
-                flywheelPower = Math.max(0.0, flywheelPower - 0.2); // Decrease by 5%, min 0.0
+                flywheelPower = Math.max(0.0, flywheelPower - 0.05); // Decrease by 5%, min 0.0
             }
 
             lastDpadUpState = currentDpadUp;
