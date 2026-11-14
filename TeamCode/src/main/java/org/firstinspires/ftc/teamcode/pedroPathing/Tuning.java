@@ -597,8 +597,9 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
 
     @Override
     public void start() {
-        follower.startTeleopDrive(true);
-        follower.update();
+        // Use FLOAT because Pedro follows paths with the motors in FLOAT.
+        follower.startTeleopDrive(false);
+        follower.setTeleOpDrive(1.0, 0.0, 0.0, true);
         state = State.ACCELERATING;
         accelerations.clear();
         stateTimer.reset();
@@ -620,23 +621,17 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
 
         switch (state) {
             case ACCELERATING:
-                // Actively command full forward power
-                follower.setTeleOpDrive(1.0, 0.0, 0.0, true);
-
-                // Check if target speed is hit
                 if (currentVel >= VELOCITY) {
                     state = State.COASTING;
+                    // Pedro cuts power in FLOAT here. stopRobot() would engage BRAKE.
+                    follower.breakFollowing();
                     previousVelocity = currentVel;
                     previousTimeNano = System.nanoTime();
                     stateTimer.reset(); // Reset timer to enforce a grace period
-                    stopRobot();
                 }
                 break;
 
             case COASTING:
-                // Keep drivetrain at zero power while coasting
-                stopRobot();
-
                 long currentTimeNano = System.nanoTime();
                 double deltaTimeSec = (currentTimeNano - previousTimeNano) / 1e9;
 
@@ -652,12 +647,10 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
                 // This prevents instant triggering while motors ramp up or cut power
                 if (stateTimer.milliseconds() > 250 && currentVel < 0.5) {
                     state = State.FINISHED;
-                    stopRobot();
                 }
                 break;
 
             case FINISHED:
-                stopRobot();
                 double average = 0;
                 for (double acceleration : accelerations) {
                     average += acceleration;
@@ -1212,8 +1205,7 @@ class DriveTuner extends OpMode {
 }
 
 /**
- * This is the Line Test Tuner OpMode. It will drive the robot forward and back
- * The user should push the robot laterally and angular to test out the drive, heading, and translational PIDFs.
+ * Runs one straight path and holds the finish so the team can watch the robot settle.
  *
  * @author Baron Henderson - 20077 The Indubitables
  * @author Anyi Lin - 10158 Scott's Bots
@@ -1223,23 +1215,18 @@ class DriveTuner extends OpMode {
  */
 class Line extends OpMode {
     public static double DISTANCE = 40;
-    private boolean forward = true;
-
-    private Path forwards;
-    private Path backwards;
+    public static double MAX_POWER = 0.4;
+    private static final Pose START_POSE = new Pose(72, 72, 0);
 
     @Override
     public void init() {
-        // Explicitly pass 0 heading (in radians) to align with setConstantHeadingInterpolation(0)
-        follower.setStartingPose(new Pose(72, 72, Math.toRadians(0)));
+        follower.setStartingPose(START_POSE);
     }
 
-    /** This initializes the Follower and creates the forward and backward Paths. */
     @Override
     public void init_loop() {
-        telemetryM.debug("This will activate all the PIDF(s)");
-        telemetryM.debug("The robot will go forward and backward continuously along the path while correcting.");
-        telemetryM.debug("You can adjust the PIDF values to tune the robot's drive PIDF(s).");
+        telemetryM.debug("The robot will drive straight once and hold the finish.");
+        telemetryM.debug("Press Stop to end the test or restart it for another run.");
         telemetryM.update(telemetry);
         follower.update();
         drawCurrent();
@@ -1248,11 +1235,12 @@ class Line extends OpMode {
     @Override
     public void start() {
         follower.activateAllPIDFs();
-        forwards = new Path(new BezierLine(new Pose(72,72), new Pose(DISTANCE + 72,72)));
-        forwards.setConstantHeadingInterpolation(0);
-        backwards = new Path(new BezierLine(new Pose(DISTANCE + 72,72), new Pose(72,72)));
-        backwards.setConstantHeadingInterpolation(0);
-        follower.followPath(forwards);
+        follower.setMaxPower(MAX_POWER);
+        Pose finish = new Pose(START_POSE.getX() + DISTANCE, START_POSE.getY());
+        Path line = new Path(new BezierLine(START_POSE, finish));
+        line.setConstantHeadingInterpolation(START_POSE.getHeading());
+        // Holding the finish lets us see any jitter without a return leg starting.
+        follower.followPath(line, true);
     }
 
     /** This runs the OpMode, updating the Follower as well as printing out the debug statements to the Telemetry */
@@ -1261,18 +1249,17 @@ class Line extends OpMode {
         follower.update();
         drawCurrentAndHistory();
 
-        if (!follower.isBusy()) {
-            if (forward) {
-                forward = false;
-                follower.followPath(backwards);
-            } else {
-                forward = true;
-                follower.followPath(forwards);
-            }
-        }
-
-        telemetryM.debug("Driving Forward?: " + forward);
+        telemetryM.debug("Path", follower.isBusy() ? "Following" : "Holding finish");
+        telemetryM.debug("X (in)", follower.getPose().getX());
+        telemetryM.debug("Y (in)", follower.getPose().getY());
+        telemetryM.debug("Heading (deg)", Math.toDegrees(follower.getHeading()));
+        telemetryM.debug("Speed (in/s)", follower.getVelocity().getMagnitude());
         telemetryM.update(telemetry);
+    }
+
+    @Override
+    public void stop() {
+        follower.breakFollowing();
     }
 }
 
