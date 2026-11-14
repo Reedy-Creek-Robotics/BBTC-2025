@@ -30,28 +30,28 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity(65.96135177011567)//Changed because of new weight and odometry pod position 10/1/2026
-            .yVelocity(57.52653299166461);//Changed because of new weight and odometry pod position 10/1/2026
+            .xVelocity(57.17504155555)//Changed because of new weight and odometry pod position 10/1/2026
+            .yVelocity(48.5273455555);//Changed because of new weight and odometry pod position 10/1/2026
 
     // 2. goBILDA Pinpoint Localizer Constants
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(-2.0)//changed because of new odometry pod position 10/1/2026
-            .strafePodX(-3.0)//changed because of new odometry pod position 10/1/2026
+            .forwardPodY(1.5)//changed because of new odometry pod position 10/1/2026
+            .strafePodX(2.0)//changed because of new odometry pod position 10/1/2026
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")
             .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD)
-            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
     // 3. Robot Mass (in kg), Zero Power Acceleration & Centripetal Scaling
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(4.57) //change this to what the weight of bot is in kilograms
             .centripetalScaling(0.0005)
-            .forwardZeroPowerAcceleration(-35)
-            .lateralZeroPowerAcceleration(-25)
+            .forwardZeroPowerAcceleration(-85)
+            .lateralZeroPowerAcceleration(-65)
            // .translationalPIDFCoefficients(new PIDFCoefficients(0.15, 0.0, 0.0004, 0.0))
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0.0, 0.00015, 0.0))//change based on weight and other factors
-            .headingPIDFCoefficients(new PIDFCoefficients(1, 0.0, 0.003, 0.0));//change based on weight and other factors
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.12, 0.0, 0.0, 0.027))//change based on weight and other factors
+            .headingPIDFCoefficients(new PIDFCoefficients(0.5, 0.0, 0.002, 0.0));//change based on weight and other factors
 
 
     // 4. Default Path Velocity Constraints
