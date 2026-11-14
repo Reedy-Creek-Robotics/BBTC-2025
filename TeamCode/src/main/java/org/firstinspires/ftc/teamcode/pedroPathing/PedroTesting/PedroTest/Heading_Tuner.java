@@ -35,12 +35,19 @@ public class Heading_Tuner extends OpMode {
     private boolean lastRightBumper = false;
 
     private Follower follower;
+    private PIDFCoefficients headingGains;
+    private PIDFCoefficients originalHeadingGains;
     private double targetHeading = 0.0;
 
     @Override
     public void init() {
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(new Pose(0, 0, 0));
+        follower.deactivateAllPIDFs();
+        follower.activateHeading();
+
+        headingGains = follower.getConstants().getCoefficientsHeadingPIDF();
+        originalHeadingGains = new PIDFCoefficients(headingGains.P, headingGains.I, headingGains.D, headingGains.F);
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.addData("Status", "Initialized. Press play to start tuning.");
@@ -50,7 +57,7 @@ public class Heading_Tuner extends OpMode {
     @Override
     public void start() {
         targetHeading = Math.toRadians(90);
-        follower.update();
+        follower.holdPoint(new Pose(0, 0, targetHeading));
     }
 
     @Override
@@ -73,17 +80,24 @@ public class Heading_Tuner extends OpMode {
         lastLeftBumper = gamepad1.left_bumper;
         lastRightBumper = gamepad1.right_bumper;
 
-        // Apply updated coefficients to Pedro Pathing follower
-        follower.setHeadingPIDFCoefficients(new PIDFCoefficients(P, I, D, F));
+        // Update the gains Pedro already reads so button presses take effect during the test.
+        headingGains.P = P;
+        headingGains.I = I;
+        headingGains.D = D;
+        headingGains.F = F;
 
-        // --- Target Heading Controls ---
-        if (gamepad1.a) targetHeading = 0.0;
-        else if (gamepad1.b) targetHeading = Math.toRadians(90);
-        else if (gamepad1.x) targetHeading = Math.toRadians(-90);
-        else if (gamepad1.y) targetHeading = Math.toRadians(180);
+        double requestedHeading = targetHeading;
+        if (gamepad1.a) requestedHeading = 0.0;
+        else if (gamepad1.b) requestedHeading = Math.toRadians(90);
+        else if (gamepad1.x) requestedHeading = Math.toRadians(-90);
+        else if (gamepad1.y) requestedHeading = Math.toRadians(180);
 
-        // Lock position and run follower loop
-        follower.holdPoint(new Pose(0, 0, targetHeading));
+        // holdPoint clears the PID's memory and briefly cuts motor power.
+        // Give Pedro a new target only when the requested heading changes.
+        if (requestedHeading != targetHeading) {
+            targetHeading = requestedHeading;
+            follower.holdPoint(new Pose(0, 0, targetHeading));
+        }
         follower.update();
 
         // Telemetry
@@ -100,5 +114,12 @@ public class Heading_Tuner extends OpMode {
         telemetry.addData("D Gain", "%.5f", D);
         telemetry.addData("F Gain", "%.4f", F);
         telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        // Restore the robot's heading gains before the next OpMode uses them.
+        follower.getConstants().setCoefficientsHeadingPIDF(originalHeadingGains);
+        follower.breakFollowing();
     }
 }
