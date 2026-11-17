@@ -9,6 +9,8 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
+
 import java.util.List;
 
 @TeleOp(name = "AprilTag Turret Tracking", group = "Testing")
@@ -49,30 +51,34 @@ public class Camera_Testing extends LinearOpMode {
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
             boolean tagFound = false;
 
-            if (currentDetections.size() > 0) {
+            if (!currentDetections.isEmpty()) {
                 for (AprilTagDetection detection : currentDetections) {
-                    // Look for a specific tag ID, or track the first one found
-                    if (detection.ftcPose != null) {
-                        tagFound = true;
+                    // SDK 12.0+ requires checking for single-tag detections to access .id
+                    if (detection instanceof AprilTagSingleDetection) {
+                        AprilTagSingleDetection singleDet = (AprilTagSingleDetection) detection;
 
-                        // 'bearing' is the horizontal angle (in degrees) from the camera center to the tag
-                        double error = detection.ftcPose.bearing;
+                        if (singleDet.ftcPose != null) {
+                            tagFound = true;
 
-                        // Calculate motor power using P-control: Power = Error * Kp
-                        double motorPower = error * KP;
+                            // 'bearing' is the horizontal angle (in degrees) from the camera center to the tag
+                            double error = singleDet.ftcPose.bearing;
 
-                        // Clamp the power to your maximum safety limit
-                        motorPower = Range.clip(motorPower, -MAX_POWER, MAX_POWER);
+                            // Calculate motor power using P-control: Power = Error * Kp
+                            double motorPower = error * KP;
 
-                        // Apply power to the motor
-                        turretMotor.setPower(motorPower);
+                            // Clamp the power to your maximum safety limit
+                            motorPower = Range.clip(motorPower, -MAX_POWER, MAX_POWER);
 
-                        // Telemetry for debugging
-                        telemetry.addLine(String.format("--- Tracking Tag ID %d ---", detection.id));
-                        telemetry.addData("Bearing (Error)", "%.2f deg", error);
-                        telemetry.addData("Motor Power", "%.2f", motorPower);
-                        telemetry.addData("Distance", "%.2f in", detection.ftcPose.range);
-                        break; // Stop after tracking the first valid tag
+                            // Apply power to the motor
+                            turretMotor.setPower(motorPower);
+
+                            // Telemetry for debugging
+                            telemetry.addLine(String.format("--- Tracking Tag ID %d ---", singleDet.id));
+                            telemetry.addData("Bearing (Error)", "%.2f deg", error);
+                            telemetry.addData("Motor Power", "%.2f", motorPower);
+                            telemetry.addData("Distance", "%.2f in", singleDet.ftcPose.range);
+                            break; // Stop after tracking the first valid tag
+                        }
                     }
                 }
             }

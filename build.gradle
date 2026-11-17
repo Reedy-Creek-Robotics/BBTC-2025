@@ -9,6 +9,8 @@ buildscript {
         mavenCentral()
         google()
         maven { url = 'https://maven.brott.dev/' }
+        maven { url = 'https://maven.pedropathing.com' }
+        maven { url = 'https://repo.dairy.foundation/releases/' }
     }
     dependencies {
         // Note for FTC Teams: Do not modify this yourself.
@@ -23,6 +25,8 @@ allprojects {
         mavenCentral()
         google()
         maven { url = 'https://maven.brott.dev/' }
+        maven { url = 'https://maven.pedropathing.com' }
+        maven { url = 'https://repo.dairy.foundation/releases/' }
     }
 }
 

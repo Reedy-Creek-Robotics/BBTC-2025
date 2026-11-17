@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name = "Main Scrimmage TeleOp", group = "Scrimmage")
 public class TeleopScrimmage extends OpMode {
@@ -18,16 +19,18 @@ public class TeleopScrimmage extends OpMode {
 
     // Toggle and state variables
     private boolean shooterActive = false;
-    private double shooterPower = 0.6; // Fixed shooter power set to 60%
-    private int intakeState = 0; // 0 = Off, 1 = Forward, -1 = Reverse
+    private double shooterVelocity = 1000; // Fixed shooter velocity
+    private int intakeState = 0; // 0 = Off, 1 = Forward, -1 = Reverse (Button A)
 
-    // Servo power level when intake is running
+    // Independent servo toggle state (Button Y)
+    private boolean servoActive = false;
     private double servoPower = 1.0;
 
     // Edge-detection state variables
-    private boolean lastGamepad1B = false;
-    private boolean lastGamepad1A = false;
-    private boolean lastGamepad1X = false;
+    private boolean lastGamepad1B = false; // Shooter
+    private boolean lastGamepad1X = false; // Intake Forward
+    private boolean lastGamepad1Y = false; // Servo
+    private boolean lastGamepad1A = false; // Reverse both
 
     @Override
     public void init() {
@@ -42,12 +45,13 @@ public class TeleopScrimmage extends OpMode {
         ShooterServo = hardwareMap.get(CRServo.class, "ShootingServo");
 
         // Set motor directions
-        Shooter.setDirection(DcMotor.Direction.REVERSE);
-        Intake.setDirection(DcMotor.Direction.REVERSE);
+        Shooter.setDirection(DcMotor.Direction.FORWARD);
+        Intake.setDirection(DcMotor.Direction.FORWARD);
         flmotor.setDirection(DcMotor.Direction.REVERSE);
         blmotor.setDirection(DcMotor.Direction.REVERSE);
         frmotor.setDirection(DcMotor.Direction.FORWARD);
         brmotor.setDirection(DcMotor.Direction.FORWARD);
+     ShooterServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Set zero power behavior
         flmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -63,7 +67,9 @@ public class TeleopScrimmage extends OpMode {
         blmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        Intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        Intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        Shooter.setVelocityPIDFCoefficients(37, 0, 0.01, 12);
 
         telemetry.addData("Status", "Initialized and Ready!");
         telemetry.update();
@@ -102,49 +108,66 @@ public class TeleopScrimmage extends OpMode {
         frmotor.setPower(frontRightPower);
         brmotor.setPower(backRightPower);
 
-        // 3. Shooter Toggle Control (Press 'B' to toggle ON/OFF)
+        // 3. Shooter Toggle Control (Button 'B' = Toggle Shooter ON/OFF)
         boolean currentB = gamepad1.b;
         if (currentB && !lastGamepad1B) {
             shooterActive = !shooterActive;
         }
         lastGamepad1B = currentB;
 
-        // Apply power to shooter based on state (Fixed at 0.6 when active)
         if (shooterActive) {
-            Shooter.setPower(shooterPower);
+            Shooter.setVelocity(shooterVelocity);
         } else {
-            Shooter.setPower(0.0);
+            Shooter.setVelocity(0.0);
         }
 
-        // 4. Intake & Shooter Servo Toggle Control (A = Forward, X = Reverse)
-        boolean currentA = gamepad1.a;
-        if (currentA && !lastGamepad1A) {
-            intakeState = (intakeState == 1) ? 0 : 1;
-        }
-        lastGamepad1A = currentA;
-
+        // 4. Intake Toggle Controls (Button 'X' = Intake Forward, Button 'A' = Reverse Both)
         boolean currentX = gamepad1.x;
         if (currentX && !lastGamepad1X) {
-            intakeState = (intakeState == -1) ? 0 : -1;
+            intakeState = (intakeState == 1) ? 0 : 1;
         }
         lastGamepad1X = currentX;
 
-        if (intakeState == 1) {
-            Intake.setPower(1.0);
-            ShooterServo.setPower(servoPower);
-        } else if (intakeState == -1) {
+        boolean currentA = gamepad1.a;
+        if (currentA && !lastGamepad1A) {
+            intakeState = (intakeState == -1) ? 0 : -1;
+        }
+        lastGamepad1A = currentA;
+
+        // 5. Servo Toggle Control (Button 'Y' = Toggle Servo ON/OFF independently)
+        boolean currentY = gamepad1.y;
+        if (currentY && !lastGamepad1Y) {
+            servoActive = !servoActive;
+        }
+        lastGamepad1Y = currentY;
+
+        // ---------------------------------------------------------
+        // 6. MOTOR & SERVO POWER ASSIGNMENTS (Priority Order)
+        // ---------------------------------------------------------
+
+        // Intake Power Assignment
+        if (intakeState == -1) {
             Intake.setPower(-1.0);
-            ShooterServo.setPower(-servoPower);
+            Shooter.setVelocity(-200);// Reverse
+        } else if (intakeState == 1) {
+            Intake.setPower(1.0);  // Forward
         } else {
-            Intake.setPower(0.0);
-            ShooterServo.setPower(0.0);
+            Intake.setPower(0.0);  // Off
         }
 
-        // 5. Telemetry Diagnostics
+        // Servo Power Assignment
+        if (intakeState == -1) {
+            ShooterServo.setPower(-1.0); // Reverse both intake and servo when A is active
+        } else if (servoActive) {
+            ShooterServo.setPower(servoPower); // Normal forward servo toggle (Y)
+        } else {
+            ShooterServo.setPower(0.0); // Off
+        }
+
+        // 7. Telemetry Diagnostics
         telemetry.addData("Shooter Status", shooterActive ? "ON" : "OFF");
-        telemetry.addData("Shooter Power", shooterPower);
-        telemetry.addData("Actual Velocity (TPS)", Shooter.getVelocity());
-        telemetry.addData("Intake / Servo Status", intakeState == 1 ? "FORWARD" : (intakeState == -1 ? "REVERSE" : "OFF"));
+        telemetry.addData("Intake Status", intakeState == 1 ? "FORWARD" : (intakeState == -1 ? "REVERSE" : "OFF"));
+        telemetry.addData("Servo Status", servoActive ? "ON" : "OFF");
         telemetry.update();
     }
 }

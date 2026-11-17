@@ -10,15 +10,16 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-@Disabled
-@TeleOp
+
+@TeleOp(name = "PIDF TeleOp", group = "PIDF")
+
 public class PIDF_Testing extends OpMode {
     private DcMotorEx shooter;
 
     private DcMotor intakeTransfer;
     private CRServo servo;
 
-    private double HighVelocity = 600;
+    private double HighVelocity = 1100;
 
 
     double F = 0;
@@ -34,12 +35,12 @@ public class PIDF_Testing extends OpMode {
 
     @Override
     public void init() {
-        intakeTransfer = hardwareMap.get(DcMotorEx.class, "intakeTransfer");
+        intakeTransfer = hardwareMap.get(DcMotorEx.class, "Intake");
         intakeTransfer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        intakeTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
-        servo = hardwareMap.get(CRServo.class,"intakeServo");
+        intakeTransfer.setDirection(DcMotorSimple.Direction.FORWARD);
+        servo = hardwareMap.get(CRServo.class,"ShootingServo");
         servo.setDirection(DcMotorSimple.Direction.REVERSE);
-        shooter = hardwareMap.get(DcMotorEx.class, "Shooter_1");
+        shooter = hardwareMap.get(DcMotorEx.class, "Flywheel");
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooter.setDirection(DcMotorSimple.Direction.FORWARD);
         PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P, 0, D, F);
