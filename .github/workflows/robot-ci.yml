@@ -93,7 +93,7 @@ jobs:
         run: 'true'
 
       - name: Verify the fixed check driver
-        run: echo '31b9eb80b7782c423be512be86f5232d9d7cd123af0977908d3192e4f721bafa  .github/ci/verify.py' | sha256sum --check --strict
+        run: echo '8784decfb7ab357a69fa077df8959f4b73c82c7a9f32b0fdcb28e10724c982fb  .github/ci/verify.py' | sha256sum --check --strict
 
       - name: Check revision guard regressions
         run: python3 -m unittest discover -s .github/ci -p 'test_source_guard.py' -v

@@ -17,7 +17,7 @@ import zipfile
 
 TASKS = {'compile': ':TeamCode:assembleDebug',
          'unit_tests': ':TeamCode:testDebugUnitTest', 'lint': ':TeamCode:lintDebug'}
-SHA256 = '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78'
+SHA256 = 'a17ddd85a26b6a7f5ddb71ff8b05fc5104c0202c6e64782429790c933686c806'
 MAX_LOG = 2 * 1024 * 1024
 MAX_XML = 8 * 1024 * 1024
 
@@ -42,8 +42,8 @@ def main():
     destination.mkdir(parents=True, exist_ok=True)
     properties = Path('gradle/wrapper/gradle-wrapper.properties')
     text = properties.read_text()
-    if r'distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip' not in text:
-        raise SystemExit('This workflow requires the reviewed Gradle 8.13 toolchain')
+    if r'distributionUrl=https\://services.gradle.org/distributions/gradle-9.1.0-bin.zip' not in text:
+        raise SystemExit('This workflow requires the reviewed Gradle 9.1.0 toolchain')
     prior = re.search(r'^distributionSha256Sum=(.+)$', text, re.MULTILINE)
     if prior and prior.group(1).strip() != SHA256:
         raise SystemExit('Unexpected Gradle distribution checksum')
