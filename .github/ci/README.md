@@ -5,7 +5,7 @@ PRs into `15707_Main_Coding_2026-2027` run **FTC Compile**, **FTC Unit Tests**, 
 The checks use the PR combined with its destination branch. Source commit IDs
 are recorded before executing the project's Gradle code.
 
-The workflow pins its actions and SDK archive and uses JDK 17, Gradle 8.13,
+The workflow pins its actions and SDK archive and uses JDK 17, Gradle 9.1.0,
 Android SDK 34, and Build Tools 35.0.0. The GitHub token is read-only and checkout
 credentials are removed before building. No team secrets, Codex credentials,
 robot devices, or production signing keys are provided. Gradle caches are not
