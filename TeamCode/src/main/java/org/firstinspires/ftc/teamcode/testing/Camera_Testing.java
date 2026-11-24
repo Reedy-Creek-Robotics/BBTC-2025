@@ -7,8 +7,11 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagClusterDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
+
 import java.util.List;
 
 @TeleOp(name = "AprilTag Turret Tracking", group = "Testing")
@@ -49,32 +52,28 @@ public class Camera_Testing extends LinearOpMode {
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
             boolean tagFound = false;
 
-            if (currentDetections.size() > 0) {
-                for (AprilTagDetection detection : currentDetections) {
-                    // Look for a specific tag ID, or track the first one found
-                    if (detection.ftcPose != null) {
-                        tagFound = true;
-
-                        // 'bearing' is the horizontal angle (in degrees) from the camera center to the tag
-                        double error = detection.ftcPose.bearing;
-
-                        // Calculate motor power using P-control: Power = Error * Kp
-                        double motorPower = error * KP;
-
-                        // Clamp the power to your maximum safety limit
-                        motorPower = Range.clip(motorPower, -MAX_POWER, MAX_POWER);
-
-                        // Apply power to the motor
-                        turretMotor.setPower(motorPower);
-
-                        // Telemetry for debugging
-                        telemetry.addLine(String.format("--- Tracking Tag ID %d ---", detection.id));
-                        telemetry.addData("Bearing (Error)", "%.2f deg", error);
-                        telemetry.addData("Motor Power", "%.2f", motorPower);
-                        telemetry.addData("Distance", "%.2f in", detection.ftcPose.range);
-                        break; // Stop after tracking the first valid tag
-                    }
+            for (AprilTagDetection detection : currentDetections) {
+                if (detection.ftcPose == null) {
+                    continue;
                 }
+
+                // The pose refers to the tag center or, for a cluster, its defined origin.
+                double error = detection.ftcPose.bearing;
+                double motorPower = Range.clip(error * KP, -MAX_POWER, MAX_POWER);
+                turretMotor.setPower(motorPower);
+                tagFound = true;
+
+                if (detection instanceof AprilTagSingleDetection) {
+                    AprilTagSingleDetection tag = (AprilTagSingleDetection) detection;
+                    telemetry.addData("Tracking", "Tag ID %d", tag.id);
+                } else if (detection instanceof AprilTagClusterDetection) {
+                    AprilTagClusterDetection cluster = (AprilTagClusterDetection) detection;
+                    telemetry.addData("Tracking cluster", cluster.metadata.name);
+                }
+                telemetry.addData("Bearing (Error)", "%.2f deg", error);
+                telemetry.addData("Motor Power", "%.2f", motorPower);
+                telemetry.addData("Distance", "%.2f in", detection.ftcPose.range);
+                break; // Track the first detection with a pose.
             }
 
             // If no tags are visible, stop the turret motor
