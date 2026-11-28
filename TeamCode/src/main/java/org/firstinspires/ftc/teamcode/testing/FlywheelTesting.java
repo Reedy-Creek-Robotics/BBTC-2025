@@ -3,18 +3,20 @@ package org.firstinspires.ftc.teamcode.testing;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 @TeleOp(name = "Flywheel Test")
 public class FlywheelTesting extends LinearOpMode {
 
-    private DcMotor flywheel;
+    private DcMotorEx flywheel;
 
     @Override
     public void runOpMode() {
         // Initialize hardware
-        flywheel = hardwareMap.get(DcMotor.class, "Flywheel");
+        flywheel = hardwareMap.get(DcMotorEx.class, "Flywheel");
         flywheel.setDirection(DcMotor.Direction.FORWARD);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flywheel.setVelocityPIDFCoefficients(0.1090,0.0,10.00,16);
 
         // State variables
         boolean flywheelOn = false;
@@ -43,19 +45,20 @@ public class FlywheelTesting extends LinearOpMode {
             boolean currentDpadUp = gamepad1.dpad_up;
             boolean currentDpadDown = gamepad1.dpad_down;
 
-            if (currentDpadUp && !lastDpadUpState) {
-                flywheelPower = Math.min(1.0, flywheelPower + 0.1); // Increase by 5%, max 1.0
+
+           /* if (currentDpadUp && !lastDpadUpState) {
+                flywheelPower = Math.min(1.0, flywheelPower + 0.05); // Increase by 5%, max 1.0
             }
             if (currentDpadDown && !lastDpadDownState) {
-                flywheelPower = Math.max(0.0, flywheelPower - 0.2); // Decrease by 5%, min 0.0
-            }
+                flywheelPower = Math.max(0.0, flywheelPower - 0.1); // Decrease by 5%, min 0.0
+            }*/
 
             lastDpadUpState = currentDpadUp;
             lastDpadDownState = currentDpadDown;
 
             // --- 3. Apply Power to Motor ---
             if (flywheelOn) {
-                flywheel.setPower(flywheelPower);
+                flywheel.setVelocity(1100);
             } else {
                 flywheel.setPower(0.0);
                 telemetry.addLine("Press button B to start/stop shooter!");
